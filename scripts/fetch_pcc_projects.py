@@ -3,7 +3,6 @@ import os
 import sys
 import time
 import json
-import datetime
 from typing import Dict, List, Any
 
 import requests
@@ -138,7 +137,6 @@ def main() -> None:
             pass
 
     output: Dict[str, Any] = {
-        "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         "source": "LFX PCC project-service",
         "foundation_id": FOUNDATION_ID_CNCF,
         "categories": categories,

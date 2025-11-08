@@ -50,6 +50,5 @@ jobs:
           add-paths: |
             pcc_projects.yaml
             audit/status_audit.md
-            data/landscape.yml
 
 

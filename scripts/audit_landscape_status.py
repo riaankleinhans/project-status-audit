@@ -16,22 +16,17 @@ except Exception:
 RAW_LANDSCAPE_URL = "https://raw.githubusercontent.com/cncf/landscape/master/landscape.yml"
 REPO_ROOT = os.getcwd()
 PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
-LANDSCAPE_LOCAL_PATH = os.path.join(REPO_ROOT, "data", "landscape.yml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
 
 
 def ensure_dirs() -> None:
-    os.makedirs(os.path.dirname(LANDSCAPE_LOCAL_PATH), exist_ok=True)
     os.makedirs(os.path.dirname(AUDIT_OUTPUT_PATH), exist_ok=True)
 
 
 def download_landscape_yaml() -> Dict[str, Any]:
     resp = requests.get(RAW_LANDSCAPE_URL, timeout=60)
     resp.raise_for_status()
-    content = resp.text
-    with open(LANDSCAPE_LOCAL_PATH, "w", encoding="utf-8") as f:
-        f.write(content)
-    return yaml.safe_load(content)
+    return yaml.safe_load(resp.text)
 
 
 def load_pcc_yaml() -> Dict[str, Any]:
