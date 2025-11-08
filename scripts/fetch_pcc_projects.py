@@ -75,6 +75,7 @@ def main() -> None:
     offset = 0
     active_records: List[Dict[str, Any]] = []
     forming_records: List[Dict[str, Any]] = []
+    archived_records: List[Dict[str, Any]] = []
 
     while True:
         data = fetch_page(session, offset=offset, limit=PAGE_SIZE)
@@ -96,6 +97,18 @@ def main() -> None:
                     forming_records.append(
                         {
                             "name": p.get("Name"),
+                            "status": p.get("Status"),
+                            "project_logo": p.get("ProjectLogo"),
+                            "repository_url": p.get("RepositoryURL"),
+                        }
+                    )
+                else:
+                    # Anything not Active or Forming is considered archived/retired/other
+                    archived_records.append(
+                        {
+                            "name": p.get("Name"),
+                            "status": p.get("Status"),
+                            "category": p.get("Category"),
                             "project_logo": p.get("ProjectLogo"),
                             "repository_url": p.get("RepositoryURL"),
                         }
@@ -110,9 +123,11 @@ def main() -> None:
     # Sort for stable output
     active_records.sort(key=lambda r: (category_rank(r.get("category")), (r.get("name") or "").lower()))
     forming_records.sort(key=lambda r: (r.get("name") or "").lower())
+    archived_records.sort(key=lambda r: (r.get("name") or "").lower())
 
     # Group active projects by category, preserving desired order
-    category_keys = ["TAG", "Graduated", "Incubating", "Sandbox"]
+    # Exclude "TAG" from categories per requirements
+    category_keys = ["Graduated", "Incubating", "Sandbox"]
     categories: Dict[str, List[Dict[str, Any]]] = {k: [] for k in category_keys}
     for rec in active_records:
         cat = rec.get("category")
@@ -128,14 +143,15 @@ def main() -> None:
         "foundation_id": FOUNDATION_ID_CNCF,
         "categories": categories,
         "forming_projects": forming_records,
+        "archived_projects": archived_records,
     }
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         yaml.safe_dump(output, f, sort_keys=False, allow_unicode=True)
 
     print(
-        f"Wrote {sum(len(v) for v in categories.values())} active projects and "
-        f"{len(forming_records)} forming projects to {OUTPUT_PATH}"
+        f"Wrote {sum(len(v) for v in categories.values())} active projects, "
+        f"{len(forming_records)} forming projects, and {len(archived_records)} archived projects to {OUTPUT_PATH}"
     )
 
 
