@@ -4,6 +4,8 @@ import sys
 import time
 from typing import Dict, Any, List, Tuple
 
+import csv
+import io
 import requests
 
 try:
@@ -15,6 +17,7 @@ except Exception:
 
 RAW_LANDSCAPE_URL = "https://raw.githubusercontent.com/cncf/landscape/master/landscape.yml"
 CLOMONITOR_CNCF_URL = "https://raw.githubusercontent.com/cncf/clomonitor/main/data/cncf.yaml"
+FOUNDATION_MAINTAINERS_CSV_URL = "https://raw.githubusercontent.com/cncf/foundation/main/project-maintainers.csv"
 REPO_ROOT = os.getcwd()
 PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
@@ -33,6 +36,26 @@ def download_clomonitor_yaml() -> Any:
     resp = requests.get(CLOMONITOR_CNCF_URL, timeout=60)
     resp.raise_for_status()
     return yaml.safe_load(resp.text)
+
+def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
+    resp = requests.get(FOUNDATION_MAINTAINERS_CSV_URL, timeout=60)
+    resp.raise_for_status()
+    text = resp.text
+    # The CSV has a header row where first column header is empty, second is "Project"
+    reader = csv.reader(io.StringIO(text))
+    rows: List[Dict[str, str]] = []
+    header = None
+    for i, r in enumerate(reader):
+        if i == 0:
+            header = r
+            continue
+        # Map to fields by position we care about: 0=status, 1=project
+        status = (r[0] if len(r) > 0 else "").strip()
+        project = (r[1] if len(r) > 1 else "").strip()
+        if not project:
+            continue
+        rows.append({"status": status, "project": project})
+    return rows
 
 
 def load_pcc_yaml() -> Dict[str, Any]:
@@ -109,6 +132,22 @@ def build_clomonitor_status_map(clomonitor_data: Any) -> Dict[str, str]:
     return name_to_status
 
 
+def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]:
+    name_to_status: Dict[str, str] = {}
+    for e in entries:
+        project = e.get("project") or ""
+        status = e.get("status") or ""
+        if not project or not status:
+            continue
+        key = normalize_name(project)
+        norm_status = normalize_status(status)
+        # Filter to statuses we track; skip steering/maintainers pseudo-projects if not in PCC
+        if norm_status in ("graduated", "incubating", "sandbox", "archived", "forming"):
+            if key not in name_to_status:
+                name_to_status[key] = norm_status
+    return name_to_status
+
+
 def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, str]]:
     pairs: List[Tuple[str, str]] = []
     categories: Dict[str, List[Dict[str, Any]]] = pcc_data.get("categories") or {}
@@ -136,7 +175,7 @@ def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, s
 
 
 def write_audit_markdown(
-    combined_rows: List[Tuple[str, str, str, str]],
+    combined_rows: List[Tuple[str, str, str, str, str]],
 ) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
     lines: List[str] = []
@@ -146,10 +185,10 @@ def write_audit_markdown(
     if not combined_rows:
         lines.append("_No mismatches found between PCC and external sources._")
     else:
-        lines.append("| Project | PCC status | Landscape status | CLOMonitor status |")
-        lines.append("|---|---|---|---|")
-        for name, pcc_status, landscape_status, cm_status in sorted(combined_rows, key=lambda r: r[0].lower()):
-            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} |")
+        lines.append("| Project | PCC status | Landscape status | CLOMonitor status | Maintainers CSV status |")
+        lines.append("|---|---|---|---|---|")
+        for name, pcc_status, landscape_status, cm_status, m_status in sorted(combined_rows, key=lambda r: r[0].lower()):
+            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} | {m_status} |")
 
     with open(AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -160,23 +199,28 @@ def main() -> None:
     pcc = load_pcc_yaml()
     landscape = download_landscape_yaml()
     clomonitor = download_clomonitor_yaml()
+    maintainers_csv = download_foundation_maintainers_csv()
     landscape_map = build_landscape_status_map(landscape)
     clomonitor_map = build_clomonitor_status_map(clomonitor)
+    maintainers_map = build_foundation_status_map(maintainers_csv)
     expected = collect_pcc_expected_statuses(pcc)
 
-    combined_rows: List[Tuple[str, str, str, str]] = []
+    combined_rows: List[Tuple[str, str, str, str, str]] = []
     for name, pcc_status in expected:
         norm_pcc = normalize_status(pcc_status)
         l_status_raw = landscape_map.get(normalize_name(name))
         cm_status_raw = clomonitor_map.get(normalize_name(name))
+        m_status_raw = maintainers_map.get(normalize_name(name))
         l_status = normalize_status(l_status_raw) if l_status_raw else ""
         cm_status = normalize_status(cm_status_raw) if cm_status_raw else ""
+        m_status = normalize_status(m_status_raw) if m_status_raw else ""
 
         landscape_mismatch = bool(l_status) and (l_status != norm_pcc)
         clomonitor_mismatch = bool(cm_status) and (cm_status != norm_pcc)
+        maintainers_mismatch = bool(m_status) and (m_status != norm_pcc)
 
-        if landscape_mismatch or clomonitor_mismatch:
-            combined_rows.append((name, norm_pcc, l_status, cm_status))
+        if landscape_mismatch or clomonitor_mismatch or maintainers_mismatch:
+            combined_rows.append((name, norm_pcc, l_status, cm_status, m_status))
 
     write_audit_markdown(combined_rows)
     print(f"Wrote audit with {len(combined_rows)} mismatches to {AUDIT_OUTPUT_PATH}")
