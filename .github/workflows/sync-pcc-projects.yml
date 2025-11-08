@@ -31,6 +31,9 @@ jobs:
           LFX_TOKEN: ${{ secrets.LFX_TOKEN }}
         run: |
           python scripts/fetch_pcc_projects.py
+      - name: Generate status audit
+        run: |
+          python scripts/audit_landscape_status.py
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
@@ -46,5 +49,7 @@ jobs:
           branch: automation/update-pcc-projects
           add-paths: |
             pcc_projects.yaml
+            audit/status_audit.md
+            data/landscape.yml
 
 
