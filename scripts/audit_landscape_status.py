@@ -162,45 +162,43 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
 def build_devstats_status_map(html: str) -> Dict[str, str]:
     soup = BeautifulSoup(html, "html.parser")
     name_to_status: Dict[str, str] = {}
-    valid_statuses = ["graduated", "incubating", "sandbox", "archived"]
-    status_markers = ["Graduated", "Incubating", "Sandbox", "Archived"]
+    valid_statuses = {"graduated", "incubating", "sandbox", "archived"}
+    status_markers = {"Graduated", "Incubating", "Sandbox", "Archived"}
 
-    # Walk the document; when we encounter a status marker, collect links until next marker
-    def is_status_text(txt: str) -> bool:
-        t = (txt or "").strip()
-        return t in status_markers
+    # Helper: detect if a table row is a status heading row
+    def row_status(tr) -> str:
+        cells = tr.find_all(["th", "td"])
+        for c in cells:
+            text = (c.get_text() or "").strip()
+            if text in status_markers:
+                return normalize_status(text)
+        return ""
 
-    # Collect all text nodes that are exact status markers
-    marker_nodes: List[Any] = []
-    for el in soup.find_all(text=True):
-        if is_status_text(el.strip()):
-            marker_nodes.append(el)
-
-    # Fallback: if markers not found, return empty mapping
-    if not marker_nodes:
-        return name_to_status
-
-    # Process regions between markers
-    for idx, node in enumerate(marker_nodes):
-        current_status = normalize_status(node.strip())
-        if current_status not in valid_statuses:
+    # Iterate over all table rows in document order; when a status row is found,
+    # collect anchors from subsequent rows until the next status row.
+    all_rows = soup.find_all("tr")
+    i = 0
+    while i < len(all_rows):
+        current = all_rows[i]
+        current_status = row_status(current)
+        if current_status and current_status in valid_statuses:
+            i += 1
+            while i < len(all_rows):
+                nxt = all_rows[i]
+                nxt_status = row_status(nxt)
+                if nxt_status and nxt_status in valid_statuses:
+                    break
+                # Collect project anchors in this row
+                for a in nxt.find_all("a"):
+                    name = (a.get_text() or "").strip()
+                    if not name:
+                        continue
+                    key = normalize_name(name)
+                    if key and key not in name_to_status:
+                        name_to_status[key] = current_status
+                i += 1
             continue
-
-        # Iterate subsequent elements until next marker node is reached
-        next_limit = marker_nodes[idx + 1] if idx + 1 < len(marker_nodes) else None
-        for following in node.parent.next_elements:
-            if next_limit and following == next_limit:
-                break
-            # If we hit another status marker implicitly, stop
-            if isinstance(following, str) and is_status_text(following.strip()):
-                break
-            if getattr(following, "name", None) == "a":
-                name = (following.get_text() or "").strip()
-                if not name:
-                    continue
-                key = normalize_name(name)
-                if key and key not in name_to_status:
-                    name_to_status[key] = current_status
+        i += 1
 
     return name_to_status
 
