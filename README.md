@@ -1,4 +1,4 @@
-# project-status-audit
+# Project Status Audit
 Project Status Audit
 
 This repository generates a canonical list of CNCF project statuses from the LFX PCC API and audits that source of truth against multiple public datasets (CNCF Landscape, CLOMonitor, Foundation Maintainers CSV, and DevStats). Results are published as a unified human-readable table.
