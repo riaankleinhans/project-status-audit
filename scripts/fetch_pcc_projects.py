@@ -73,7 +73,8 @@ def main() -> None:
     )
 
     offset = 0
-    all_records: List[Dict[str, Any]] = []
+    active_records: List[Dict[str, Any]] = []
+    forming_records: List[Dict[str, Any]] = []
 
     while True:
         data = fetch_page(session, offset=offset, limit=PAGE_SIZE)
@@ -86,9 +87,19 @@ def main() -> None:
                 foundation = (p.get("Foundation") or {}).get("ID")
                 if foundation != FOUNDATION_ID_CNCF:
                     continue
-                # Keep both active and forming (Formation - Exploratory)
-                record = project_to_record(p)
-                all_records.append(record)
+                status = p.get("Status")
+                if status == "Active":
+                    record = project_to_record(p)
+                    active_records.append(record)
+                elif status == "Formation - Exploratory":
+                    # Forming projects are tracked separately with a reduced schema
+                    forming_records.append(
+                        {
+                            "name": p.get("Name"),
+                            "project_logo": p.get("ProjectLogo"),
+                            "repository_url": p.get("RepositoryURL"),
+                        }
+                    )
             except Exception:
                 # Skip malformed entries but continue
                 continue
@@ -97,19 +108,35 @@ def main() -> None:
         time.sleep(SLEEP_BETWEEN_CALLS_SECONDS)
 
     # Sort for stable output
-    all_records.sort(key=lambda r: (category_rank(r.get("category")), (r.get("name") or "").lower()))
+    active_records.sort(key=lambda r: (category_rank(r.get("category")), (r.get("name") or "").lower()))
+    forming_records.sort(key=lambda r: (r.get("name") or "").lower())
+
+    # Group active projects by category, preserving desired order
+    category_keys = ["TAG", "Graduated", "Incubating", "Sandbox"]
+    categories: Dict[str, List[Dict[str, Any]]] = {k: [] for k in category_keys}
+    for rec in active_records:
+        cat = rec.get("category")
+        if cat in categories:
+            categories[cat].append(rec)
+        else:
+            # unknown categories ignored from grouping to mimic calendar focus
+            pass
 
     output: Dict[str, Any] = {
         "generated_at": datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z",
         "source": "LFX PCC project-service",
         "foundation_id": FOUNDATION_ID_CNCF,
-        "projects": all_records,
+        "categories": categories,
+        "forming_projects": forming_records,
     }
 
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         yaml.safe_dump(output, f, sort_keys=False, allow_unicode=True)
 
-    print(f"Wrote {len(all_records)} projects to {OUTPUT_PATH}")
+    print(
+        f"Wrote {sum(len(v) for v in categories.values())} active projects and "
+        f"{len(forming_records)} forming projects to {OUTPUT_PATH}"
+    )
 
 
 if __name__ == "__main__":
