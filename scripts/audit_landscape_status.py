@@ -14,6 +14,7 @@ except Exception:
 
 
 RAW_LANDSCAPE_URL = "https://raw.githubusercontent.com/cncf/landscape/master/landscape.yml"
+CLOMONITOR_CNCF_URL = "https://raw.githubusercontent.com/cncf/clomonitor/main/data/cncf.yaml"
 REPO_ROOT = os.getcwd()
 PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
@@ -25,6 +26,11 @@ def ensure_dirs() -> None:
 
 def download_landscape_yaml() -> Dict[str, Any]:
     resp = requests.get(RAW_LANDSCAPE_URL, timeout=60)
+    resp.raise_for_status()
+    return yaml.safe_load(resp.text)
+
+def download_clomonitor_yaml() -> Any:
+    resp = requests.get(CLOMONITOR_CNCF_URL, timeout=60)
     resp.raise_for_status()
     return yaml.safe_load(resp.text)
 
@@ -82,6 +88,27 @@ def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]
     return name_to_status
 
 
+def build_clomonitor_status_map(clomonitor_data: Any) -> Dict[str, str]:
+    # clomonitor cncf.yaml is a list of project entries with fields:
+    # - name (slug), display_name, maturity (graduated/incubating/sandbox), ...
+    name_to_status: Dict[str, str] = {}
+    if not isinstance(clomonitor_data, list):
+        return name_to_status
+    for entry in clomonitor_data:
+        if not isinstance(entry, dict):
+            continue
+        display_name = (entry.get("display_name") or entry.get("name") or "").strip()
+        if not display_name:
+            continue
+        maturity = normalize_status(entry.get("maturity") or "")
+        if not maturity:
+            continue
+        key = normalize_name(display_name)
+        if key not in name_to_status:
+            name_to_status[key] = maturity
+    return name_to_status
+
+
 def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, str]]:
     pairs: List[Tuple[str, str]] = []
     categories: Dict[str, List[Dict[str, Any]]] = pcc_data.get("categories") or {}
@@ -108,19 +135,22 @@ def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, s
     return pairs
 
 
-def write_audit_markdown(mismatches: List[Tuple[str, str, str]]) -> None:
+def write_audit_markdown(
+    combined_rows: List[Tuple[str, str, str, str]],
+) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
     lines: List[str] = []
     lines.append(f"# CNCF Project Status Audit")
     lines.append(f"Generated: {ts}")
     lines.append("")
-    if not mismatches:
-        lines.append("_No mismatches found between PCC and Landscape._")
+    if not combined_rows:
+        lines.append("_No mismatches found between PCC and external sources._")
     else:
-        lines.append("| Project | PCC status | Landscape status |")
-        lines.append("|---|---|---|")
-        for name, pcc_status, landscape_status in sorted(mismatches, key=lambda r: r[0].lower()):
-            lines.append(f"| {name} | {pcc_status} | {landscape_status} |")
+        lines.append("| Project | PCC status | Landscape status | CLOMonitor status |")
+        lines.append("|---|---|---|---|")
+        for name, pcc_status, landscape_status, cm_status in sorted(combined_rows, key=lambda r: r[0].lower()):
+            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} |")
+
     with open(AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
 
@@ -129,20 +159,27 @@ def main() -> None:
     ensure_dirs()
     pcc = load_pcc_yaml()
     landscape = download_landscape_yaml()
+    clomonitor = download_clomonitor_yaml()
     landscape_map = build_landscape_status_map(landscape)
+    clomonitor_map = build_clomonitor_status_map(clomonitor)
     expected = collect_pcc_expected_statuses(pcc)
 
-    mismatches: List[Tuple[str, str, str]] = []
+    combined_rows: List[Tuple[str, str, str, str]] = []
     for name, pcc_status in expected:
-        l_status = landscape_map.get(normalize_name(name))
-        if not l_status:
-            # Not found in landscape: skip per spec (only add when both exist and mismatch)
-            continue
-        if normalize_status(pcc_status) != normalize_status(l_status):
-            mismatches.append((name, normalize_status(pcc_status), normalize_status(l_status)))
+        norm_pcc = normalize_status(pcc_status)
+        l_status_raw = landscape_map.get(normalize_name(name))
+        cm_status_raw = clomonitor_map.get(normalize_name(name))
+        l_status = normalize_status(l_status_raw) if l_status_raw else ""
+        cm_status = normalize_status(cm_status_raw) if cm_status_raw else ""
 
-    write_audit_markdown(mismatches)
-    print(f"Wrote audit with {len(mismatches)} mismatches to {AUDIT_OUTPUT_PATH}")
+        landscape_mismatch = bool(l_status) and (l_status != norm_pcc)
+        clomonitor_mismatch = bool(cm_status) and (cm_status != norm_pcc)
+
+        if landscape_mismatch or clomonitor_mismatch:
+            combined_rows.append((name, norm_pcc, l_status, cm_status))
+
+    write_audit_markdown(combined_rows)
+    print(f"Wrote audit with {len(combined_rows)} mismatches to {AUDIT_OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
