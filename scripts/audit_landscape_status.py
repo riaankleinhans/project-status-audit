@@ -24,6 +24,7 @@ RAW_LANDSCAPE_URL = "https://raw.githubusercontent.com/cncf/landscape/master/lan
 CLOMONITOR_CNCF_URL = "https://raw.githubusercontent.com/cncf/clomonitor/main/data/cncf.yaml"
 FOUNDATION_MAINTAINERS_CSV_URL = "https://raw.githubusercontent.com/cncf/foundation/main/project-maintainers.csv"
 DEVSTATS_URL = "https://devstats.cncf.io/"
+ARTWORK_README_URL = "https://raw.githubusercontent.com/cncf/artwork/main/README.md"
 REPO_ROOT = os.getcwd()
 PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
@@ -65,6 +66,11 @@ def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
 
 def download_devstats_html() -> str:
     resp = requests.get(DEVSTATS_URL, timeout=60)
+    resp.raise_for_status()
+    return resp.text
+
+def download_artwork_readme() -> str:
+    resp = requests.get(ARTWORK_README_URL, timeout=60)
     resp.raise_for_status()
     return resp.text
 
@@ -119,6 +125,61 @@ def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]
                 # Prefer first occurrence; duplicates are rare and usually identical
                 if key not in name_to_status:
                     name_to_status[key] = status
+    return name_to_status
+
+
+def build_artwork_status_map(readme_text: str) -> Dict[str, str]:
+    # Parse cncf/artwork README where projects are grouped under bullet headings.
+    category_to_status = {
+        "graduated projects": "graduated",
+        "incubating projects": "incubating",
+        "sandbox projects": "sandbox",
+        "archived projects": "archived",
+    }
+    name_to_status: Dict[str, str] = {}
+    current_status: str = ""
+
+    def parse_bullet_text(line: str) -> str:
+        # Extract text after the first '* '
+        try:
+            star_idx = line.index("*")
+        except ValueError:
+            return ""
+        text = line[star_idx + 1 :].strip()
+        # Handle markdown links: [Name](url)
+        if text.startswith("[") and "]" in text:
+            try:
+                end = text.index("]")
+                text = text[1:end].strip()
+            except Exception:
+                pass
+        # Trim trailing double-space soft break markers
+        text = text.split("  ")[0].strip()
+        # Remove stray list markers or punctuation
+        return text.strip("*-_ ").strip()
+
+    lines = readme_text.splitlines()
+    for raw in lines:
+        line = raw.rstrip("\n")
+        if not line.strip():
+            continue
+        # Zero-indent bullets define categories
+        if line.startswith("* "):
+            cat = parse_bullet_text(line).lower()
+            if cat in category_to_status:
+                current_status = category_to_status[cat]
+                continue
+            else:
+                # A new top-level bullet that isn't a known category ends the current section
+                current_status = ""
+        # Indented bullets under a current category are project names (including subprojects)
+        if current_status and line.lstrip().startswith("* ") and not line.startswith("* "):
+            name = parse_bullet_text(line)
+            if name:
+                key = normalize_name(name)
+                if key and key not in name_to_status:
+                    name_to_status[key] = current_status
+
     return name_to_status
 
 
@@ -230,7 +291,7 @@ def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, s
 
 
 def write_audit_markdown(
-    combined_rows: List[Tuple[str, str, str, str, str, str]],
+    combined_rows: List[Tuple[str, str, str, str, str, str, str]],
 ) -> None:
     ts = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
     lines: List[str] = []
@@ -240,10 +301,10 @@ def write_audit_markdown(
     if not combined_rows:
         lines.append("_No mismatches found between PCC and external sources._")
     else:
-        lines.append("| Project | PCC status | Landscape status | CLOMonitor status | Maintainers CSV status | DevStats status |")
-        lines.append("|---|---|---|---|---|---|")
-        for name, pcc_status, landscape_status, cm_status, m_status, d_status in sorted(combined_rows, key=lambda r: r[0].lower()):
-            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} | {m_status} | {d_status} |")
+        lines.append("| Project | PCC status | Landscape status | CLOMonitor status | Maintainers CSV status | DevStats status | Artwork status |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for name, pcc_status, landscape_status, cm_status, m_status, d_status, a_status in sorted(combined_rows, key=lambda r: r[0].lower()):
+            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} | {m_status} | {d_status} | {a_status} |")
 
     with open(AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -256,31 +317,36 @@ def main() -> None:
     clomonitor = download_clomonitor_yaml()
     maintainers_csv = download_foundation_maintainers_csv()
     devstats_html = download_devstats_html()
+    artwork_readme = download_artwork_readme()
     landscape_map = build_landscape_status_map(landscape)
     clomonitor_map = build_clomonitor_status_map(clomonitor)
     maintainers_map = build_foundation_status_map(maintainers_csv)
     devstats_map = build_devstats_status_map(devstats_html)
+    artwork_map = build_artwork_status_map(artwork_readme)
     expected = collect_pcc_expected_statuses(pcc)
 
-    combined_rows: List[Tuple[str, str, str, str, str, str]] = []
+    combined_rows: List[Tuple[str, str, str, str, str, str, str]] = []
     for name, pcc_status in expected:
         norm_pcc = normalize_status(pcc_status)
         l_status_raw = landscape_map.get(normalize_name(name))
         cm_status_raw = clomonitor_map.get(normalize_name(name))
         m_status_raw = maintainers_map.get(normalize_name(name))
         d_status_raw = devstats_map.get(normalize_name(name))
+        a_status_raw = artwork_map.get(normalize_name(name))
         l_status = normalize_status(l_status_raw) if l_status_raw else ""
         cm_status = normalize_status(cm_status_raw) if cm_status_raw else ""
         m_status = normalize_status(m_status_raw) if m_status_raw else ""
         d_status = normalize_status(d_status_raw) if d_status_raw else ""
+        a_status = normalize_status(a_status_raw) if a_status_raw else ""
 
         landscape_mismatch = bool(l_status) and (l_status != norm_pcc)
         clomonitor_mismatch = bool(cm_status) and (cm_status != norm_pcc)
         maintainers_mismatch = bool(m_status) and (m_status != norm_pcc)
         devstats_mismatch = bool(d_status) and (d_status != norm_pcc)
+        artwork_mismatch = bool(a_status) and (a_status != norm_pcc)
 
-        if landscape_mismatch or clomonitor_mismatch or maintainers_mismatch or devstats_mismatch:
-            combined_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status))
+        if landscape_mismatch or clomonitor_mismatch or maintainers_mismatch or devstats_mismatch or artwork_mismatch:
+            combined_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status, a_status))
 
     write_audit_markdown(combined_rows)
     print(f"Wrote audit with {len(combined_rows)} mismatches to {AUDIT_OUTPUT_PATH}")
