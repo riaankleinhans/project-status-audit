@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import sys
-import time
 from typing import Dict, Any, List, Tuple
 
 import csv
@@ -293,15 +292,14 @@ def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, s
 def write_audit_markdown(
     combined_rows: List[Tuple[str, str, str, str, str, str, str]],
 ) -> None:
-    ts = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
     lines: List[str] = []
     lines.append(f"# CNCF Project Status Audit")
-    lines.append(f"Generated: {ts}")
     lines.append("")
     if not combined_rows:
         lines.append("_No mismatches found between PCC and external sources._")
     else:
-        lines.append("| Project | PCC status | Landscape status | CLOMonitor status | Maintainers CSV status | DevStats status | Artwork status |")
+        # Column headers hyperlinked to their respective sources for quick reference
+        lines.append("| Project | [PCC status](./pcc_projects.yaml) | [Landscape status](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor status](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers CSV status](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats status](https://devstats.cncf.io/) | [Artwork status](https://github.com/cncf/artwork/blob/main/README.md) |")
         lines.append("|---|---|---|---|---|---|---|")
         for name, pcc_status, landscape_status, cm_status, m_status, d_status, a_status in sorted(combined_rows, key=lambda r: r[0].lower()):
             lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} | {m_status} | {d_status} | {a_status} |")
