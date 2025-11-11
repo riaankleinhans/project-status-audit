@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import sys
-import time
 from typing import Dict, Any, List, Tuple
 
 import csv
@@ -293,10 +292,8 @@ def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, s
 def write_audit_markdown(
     combined_rows: List[Tuple[str, str, str, str, str, str, str]],
 ) -> None:
-    ts = time.strftime("%Y-%m-%d %H:%M:%SZ", time.gmtime())
     lines: List[str] = []
     lines.append(f"# CNCF Project Status Audit")
-    lines.append(f"Generated: {ts}")
     lines.append("")
     if not combined_rows:
         lines.append("_No mismatches found between PCC and external sources._")
