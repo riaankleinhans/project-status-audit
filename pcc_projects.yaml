@@ -860,7 +860,7 @@ categories:
     slug: kubeclipper
     category: Sandbox
     status: Active
-    project_logo: null
+    project_logo: https://lfx-cdn-prod.s3.us-east-1.amazonaws.com/project-artifacts/kubeclipper/kubeclipper-logo.svg?v=1763395060480
     repository_url: https://github.com/Kubeclipper
   - name: KubeFleet
     slug: kubefleet
@@ -1283,6 +1283,10 @@ forming_projects:
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/cedar-policy
+- name: CoHDI
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/CoHDI
 - name: CubeCOS
   status: Formation - Exploratory
   project_logo: null
@@ -1291,6 +1295,14 @@ forming_projects:
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/vfarcic/dot-ai
+- name: Dexfile
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/dexnore
+- name: Gthulhu
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/Gthulhu
 - name: HolmesGPT
   status: Formation - Exploratory
   project_logo: null
@@ -1319,6 +1331,10 @@ forming_projects:
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/sunil006-lab
+- name: Schema Driven Configuration
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/sdcio
 - name: Sermant
   status: Formation - Exploratory
   project_logo: null
