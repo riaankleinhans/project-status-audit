@@ -663,7 +663,7 @@ categories:
     category: Sandbox
     status: Active
     project_logo: https://lfx-cdn-prod.s3.us-east-1.amazonaws.com/project-artifacts/hexa/hexa-logo.svg?v=1708621268755
-    repository_url: https://github.com/hexa-org/policy-orchestrator
+    repository_url: https://github.com/hexa-org
   - name: HwameiStor
     slug: hwameistor
     category: Sandbox
@@ -1281,7 +1281,7 @@ forming_projects:
   repository_url: https://github.com/negativa-ai/BLAFS
 - name: Cedar
   status: Formation - Exploratory
-  project_logo: null
+  project_logo: https://lfx-cdn-prod.s3.us-east-1.amazonaws.com/project-artifacts/cedar-policy/cedar-policy-logo.svg?v=1764851829365
   repository_url: https://github.com/cedar-policy
 - name: CoHDI
   status: Formation - Exploratory
