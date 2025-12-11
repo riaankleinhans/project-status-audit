@@ -451,7 +451,9 @@ def main() -> None:
         m_status_raw = maintainers_map.get(key)
         d_status_raw = devstats_map.get(key)
         a_status_raw = artwork_map.get(key)
-        l_status = normalize_status(l_status_raw) if l_status_raw else ""
+        # For Landscape, explicitly show '-' when missing to flag anomaly
+        l_status = normalize_status(l_status_raw) if l_status_raw else "-"
+        # For other sources, keep empty when missing
         cm_status = normalize_status(cm_status_raw) if cm_status_raw else ""
         m_status = normalize_status(m_status_raw) if m_status_raw else ""
         d_status = normalize_status(d_status_raw) if d_status_raw else ""
@@ -459,7 +461,8 @@ def main() -> None:
 
         all_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status, a_status))
 
-        landscape_mismatch = bool(l_status) and (l_status != norm_pcc)
+        # Missing Landscape ('-') or differing status are both anomalies
+        landscape_mismatch = (l_status == "-") or (l_status != norm_pcc)
         clomonitor_mismatch = bool(cm_status) and (cm_status != norm_pcc)
         maintainers_mismatch = bool(m_status) and (m_status != norm_pcc)
         devstats_mismatch = bool(d_status) and (d_status != norm_pcc)
