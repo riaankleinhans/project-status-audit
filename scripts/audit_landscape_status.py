@@ -156,6 +156,25 @@ def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]
                     name_to_status[key] = status
     return name_to_status
 
+def build_landscape_name_to_repo_map(landscape_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Build a map of project display name -> normalized GitHub path derived from repo_url.
+    """
+    name_to_repo: Dict[str, str] = {}
+    landscape_list: List[Any] = landscape_data.get("landscape") or []
+    for cat in landscape_list:
+        for sub in (cat.get("subcategories") or []):
+            for item in (sub.get("items") or []):
+                name = (item.get("name") or "").strip()
+                if not name:
+                    continue
+                repo_url = (item.get("repo_url") or "").strip()
+                key = normalize_name(name)
+                gh_path = _extract_github_path(repo_url)
+                if key and gh_path and key not in name_to_repo:
+                    name_to_repo[key] = gh_path
+    return name_to_repo
+
 
 def _extract_github_path(url: str) -> str:
     """
@@ -394,6 +413,27 @@ def build_pcc_name_to_repo_map(pcc_data: Dict[str, Any]) -> Dict[str, str]:
                 name_to_repo[normalize_name(name)] = repo
     return name_to_repo
 
+def _repo_paths_align(a: str, b: str) -> bool:
+    """
+    Determine whether two GitHub paths likely refer to the same project.
+    Accept mappings where:
+      - exact match
+      - org-only vs org/repo inside the same org (prefix)
+    """
+    if not a or not b:
+        # Cannot verify; treat as not aligned
+        return False
+    a = a.strip().lower()
+    b = b.strip().lower()
+    if a == b:
+        return True
+    # org-only vs org/repo
+    if "/" not in a and b.startswith(a + "/"):
+        return True
+    if "/" not in b and a.startswith(b + "/"):
+        return True
+    return False
+
 
 def write_audit_markdown(
     combined_rows: List[Tuple[str, str, str, str, str, str, str]],
@@ -426,6 +466,7 @@ def main() -> None:
     artwork_readme = download_artwork_readme()
     landscape_map = build_landscape_status_map(landscape)
     landscape_repo_map = build_landscape_repo_status_map(landscape)
+    landscape_name_to_repo = build_landscape_name_to_repo_map(landscape)
     clomonitor_map = build_clomonitor_status_map(clomonitor)
     maintainers_map = build_foundation_status_map(maintainers_csv)
     devstats_map = build_devstats_status_map(devstats_html)
@@ -438,6 +479,13 @@ def main() -> None:
         norm_pcc = normalize_status(pcc_status)
         norm_name = normalize_name(name)
         l_status_raw: Optional[str] = landscape_map.get(norm_name)
+        # If name matched, require repo alignment when both sides provide a repo path
+        if l_status_raw:
+            pcc_repo = _extract_github_path(pcc_name_to_repo.get(norm_name, ""))
+            ls_repo = landscape_name_to_repo.get(norm_name, "")
+            if pcc_repo and ls_repo and not _repo_paths_align(pcc_repo, ls_repo):
+                # treat as not found by name due to repo mismatch
+                l_status_raw = None
         if not l_status_raw:
             # Try matching by GitHub repository path if available
             repo_url = pcc_name_to_repo.get(norm_name, "")
