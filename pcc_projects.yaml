@@ -664,6 +664,12 @@ categories:
     status: Active
     project_logo: https://lfx-cdn-prod.s3.us-east-1.amazonaws.com/project-artifacts/hexa/hexa-logo.svg?v=1708621268755
     repository_url: https://github.com/hexa-org
+  - name: HolmesGPT
+    slug: holmesgpt
+    category: Sandbox
+    status: Active
+    project_logo: null
+    repository_url: https://github.com/holmesgpt/
   - name: HwameiStor
     slug: hwameistor
     category: Sandbox
@@ -1271,6 +1277,10 @@ categories:
     project_logo: https://lf-master-project-logos-prod.s3.us-east-2.amazonaws.com/zot.svg
     repository_url: https://github.com/project-zot/zot
 forming_projects:
+- name: Agones
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/googleforgames/agones
 - name: AIBrix
   status: Formation - Exploratory
   project_logo: null
@@ -1287,10 +1297,18 @@ forming_projects:
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/CoHDI
+- name: Cruise
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/cruise-org
 - name: CubeCOS
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/bigstack-oss/cubecos
+- name: Curvine
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/CurvineIO
 - name: DevOps AI Toolkit
   status: Formation - Exploratory
   project_logo: null
@@ -1303,10 +1321,6 @@ forming_projects:
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/Gthulhu
-- name: HolmesGPT
-  status: Formation - Exploratory
-  project_logo: null
-  repository_url: https://github.com/robusta-dev/holmesgpt/
 - name: KAI Scheduler
   status: Formation - Exploratory
   project_logo: null
@@ -1327,6 +1341,10 @@ forming_projects:
   status: Formation - Exploratory
   project_logo: null
   repository_url: https://github.com/nmstate/nmstate
+- name: OpenChoreo
+  status: Formation - Exploratory
+  project_logo: null
+  repository_url: https://github.com/openchoreo
 - name: OptiFlow (AI‑OrchestrateX)
   status: Formation - Exploratory
   project_logo: null
