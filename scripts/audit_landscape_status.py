@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 
 import csv
 import io
@@ -27,26 +27,45 @@ ARTWORK_README_URL = "https://raw.githubusercontent.com/cncf/artwork/main/README
 REPO_ROOT = os.getcwd()
 PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
+DOWNLOADS_DIR = os.path.join(REPO_ROOT, "downloads")
+LANDSCAPE_DL_PATH = os.path.join(DOWNLOADS_DIR, "landscape.yml")
+CLOMONITOR_DL_PATH = os.path.join(DOWNLOADS_DIR, "clomonitor.yaml")
+MAINTAINERS_DL_PATH = os.path.join(DOWNLOADS_DIR, "project-maintainers.csv")
+DEVSTATS_DL_PATH = os.path.join(DOWNLOADS_DIR, "devstats.html")
+ARTWORK_DL_PATH = os.path.join(DOWNLOADS_DIR, "artwork.md")
 
 
 def ensure_dirs() -> None:
     os.makedirs(os.path.dirname(AUDIT_OUTPUT_PATH), exist_ok=True)
+    os.makedirs(DOWNLOADS_DIR, exist_ok=True)
 
 
 def download_landscape_yaml() -> Dict[str, Any]:
     resp = requests.get(RAW_LANDSCAPE_URL, timeout=60)
     resp.raise_for_status()
-    return yaml.safe_load(resp.text)
+    text = resp.text
+    # persist exact contents checked
+    ensure_dirs()
+    with open(LANDSCAPE_DL_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return yaml.safe_load(text)
 
 def download_clomonitor_yaml() -> Any:
     resp = requests.get(CLOMONITOR_CNCF_URL, timeout=60)
     resp.raise_for_status()
-    return yaml.safe_load(resp.text)
+    text = resp.text
+    ensure_dirs()
+    with open(CLOMONITOR_DL_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return yaml.safe_load(text)
 
 def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
     resp = requests.get(FOUNDATION_MAINTAINERS_CSV_URL, timeout=60)
     resp.raise_for_status()
     text = resp.text
+    ensure_dirs()
+    with open(MAINTAINERS_DL_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
     # The CSV has a header row where first column header is empty, second is "Project"
     reader = csv.reader(io.StringIO(text))
     rows: List[Dict[str, str]] = []
@@ -66,12 +85,20 @@ def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
 def download_devstats_html() -> str:
     resp = requests.get(DEVSTATS_URL, timeout=60)
     resp.raise_for_status()
-    return resp.text
+    text = resp.text
+    ensure_dirs()
+    with open(DEVSTATS_DL_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return text
 
 def download_artwork_readme() -> str:
     resp = requests.get(ARTWORK_README_URL, timeout=60)
     resp.raise_for_status()
-    return resp.text
+    text = resp.text
+    ensure_dirs()
+    with open(ARTWORK_DL_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return text
 
 
 def load_pcc_yaml() -> Dict[str, Any]:
@@ -105,6 +132,10 @@ def normalize_status(value: str) -> str:
 
 
 def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Build a map of project display name -> maturity status from landscape.yml.
+    Prefer a 'maturity' field if present; otherwise use 'project' field.
+    """
     name_to_status: Dict[str, str] = {}
     landscape_list: List[Any] = landscape_data.get("landscape") or []
     for cat in landscape_list:
@@ -112,19 +143,72 @@ def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]
         for sub in subcats:
             items = (sub.get("items") or [])
             for item in items:
-                # Items may be nested lists/dicts; standardize on dicts with "name" and "project"
                 name = (item.get("name") or "").strip()
                 if not name:
                     continue
-                status = normalize_status(item.get("project") or "")
+                # Some landscape items may carry 'maturity'; most CNCF items use 'project'
+                status_val = item.get("maturity") or item.get("project") or ""
+                status = normalize_status(status_val)
                 if not status:
-                    # Non-CNCF or missing project status; skip
                     continue
                 key = normalize_name(name)
-                # Prefer first occurrence; duplicates are rare and usually identical
                 if key not in name_to_status:
                     name_to_status[key] = status
     return name_to_status
+
+
+def _extract_github_path(url: str) -> str:
+    """
+    Return normalized GitHub path key:
+    - 'org/repo' if a repo URL
+    - 'org' if an org URL
+    Empty string if not a GitHub URL or cannot parse.
+    """
+    if not url:
+        return ""
+    u = url.strip().lower()
+    if not (u.startswith("http://") or u.startswith("https://")):
+        return ""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(u)
+        if parsed.netloc != "github.com":
+            return ""
+        path = parsed.path.strip("/")
+        if not path:
+            return ""
+        parts = [p for p in path.split("/") if p]
+        if not parts:
+            return ""
+        if len(parts) == 1:
+            return parts[0]
+        # strip .git suffix from repo name if present
+        repo = parts[1]
+        if repo.endswith(".git"):
+            repo = repo[:-4]
+        return f"{parts[0]}/{repo}"
+    except Exception:
+        return ""
+
+
+def build_landscape_repo_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Build a map of GitHub org or org/repo -> maturity status from landscape.yml repo_url.
+    """
+    repo_to_status: Dict[str, str] = {}
+    landscape_list: List[Any] = landscape_data.get("landscape") or []
+    for cat in landscape_list:
+        for sub in (cat.get("subcategories") or []):
+            for item in (sub.get("items") or []):
+                status_val = item.get("maturity") or item.get("project") or ""
+                status = normalize_status(status_val)
+                if not status:
+                    continue
+                repo_url = (item.get("repo_url") or "").strip()
+                key = _extract_github_path(repo_url)
+                if key and key not in repo_to_status:
+                    repo_to_status[key] = status
+    return repo_to_status
 
 
 def build_artwork_status_map(readme_text: str) -> Dict[str, str]:
@@ -289,6 +373,28 @@ def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, s
     return pairs
 
 
+def build_pcc_name_to_repo_map(pcc_data: Dict[str, Any]) -> Dict[str, str]:
+    """
+    Build a lookup of PCC project display name -> repository_url (if any).
+    """
+    name_to_repo: Dict[str, str] = {}
+    categories: Dict[str, List[Dict[str, Any]]] = pcc_data.get("categories") or {}
+    for items in categories.values():
+        for item in items or []:
+            name = (item.get("name") or "").strip()
+            repo = (item.get("repository_url") or "").strip()
+            if name and repo:
+                name_to_repo[normalize_name(name)] = repo
+    # Also include archived and forming, if present
+    for section in ("archived_projects", "forming_projects"):
+        for item in pcc_data.get(section) or []:
+            name = (item.get("name") or "").strip()
+            repo = (item.get("repository_url") or "").strip()
+            if name and repo:
+                name_to_repo[normalize_name(name)] = repo
+    return name_to_repo
+
+
 def write_audit_markdown(
     combined_rows: List[Tuple[str, str, str, str, str, str, str]],
 ) -> None:
@@ -302,7 +408,9 @@ def write_audit_markdown(
         lines.append("| Project | [PCC status](./pcc_projects.yaml) | [Landscape status](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor status](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers CSV status](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats status](https://devstats.cncf.io/) | [Artwork status](https://github.com/cncf/artwork/blob/main/README.md) |")
         lines.append("|---|---|---|---|---|---|---|")
         for name, pcc_status, landscape_status, cm_status, m_status, d_status, a_status in sorted(combined_rows, key=lambda r: r[0].lower()):
-            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} | {m_status} | {d_status} | {a_status} |")
+            def fmt(v: str) -> str:
+                return v if v else "—"
+            lines.append(f"| {name} | {fmt(pcc_status)} | {fmt(landscape_status)} | {fmt(cm_status)} | {fmt(m_status)} | {fmt(d_status)} | {fmt(a_status)} |")
 
     with open(AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -317,16 +425,25 @@ def main() -> None:
     devstats_html = download_devstats_html()
     artwork_readme = download_artwork_readme()
     landscape_map = build_landscape_status_map(landscape)
+    landscape_repo_map = build_landscape_repo_status_map(landscape)
     clomonitor_map = build_clomonitor_status_map(clomonitor)
     maintainers_map = build_foundation_status_map(maintainers_csv)
     devstats_map = build_devstats_status_map(devstats_html)
     artwork_map = build_artwork_status_map(artwork_readme)
     expected = collect_pcc_expected_statuses(pcc)
+    pcc_name_to_repo = build_pcc_name_to_repo_map(pcc)
 
     combined_rows: List[Tuple[str, str, str, str, str, str, str]] = []
     for name, pcc_status in expected:
         norm_pcc = normalize_status(pcc_status)
-        l_status_raw = landscape_map.get(normalize_name(name))
+        norm_name = normalize_name(name)
+        l_status_raw: Optional[str] = landscape_map.get(norm_name)
+        if not l_status_raw:
+            # Try matching by GitHub repository path if available
+            repo_url = pcc_name_to_repo.get(norm_name, "")
+            gh_key = _extract_github_path(repo_url)
+            if gh_key:
+                l_status_raw = landscape_repo_map.get(gh_key)
         cm_status_raw = clomonitor_map.get(normalize_name(name))
         m_status_raw = maintainers_map.get(normalize_name(name))
         d_status_raw = devstats_map.get(normalize_name(name))
