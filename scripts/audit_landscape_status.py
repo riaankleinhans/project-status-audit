@@ -178,10 +178,25 @@ def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]
                 if not status:
                     # Non-CNCF or missing project status; skip
                     continue
-                key = normalize_name(name)
-                # Prefer first occurrence; duplicates are rare and usually identical
-                if key not in name_to_status:
-                    name_to_status[key] = status
+                # Build multiple keys for robust matching:
+                # - exact display name
+                # - lfx_slug when present
+                # - common suffix-stripped variant: " Container Linux"
+                keys: List[str] = []
+                display_key = normalize_name(name)
+                keys.append(display_key)
+                # lfx_slug alias
+                extra = item.get("extra") or {}
+                lfx_slug = (extra.get("lfx_slug") or "").strip()
+                if lfx_slug:
+                    keys.append(normalize_name(lfx_slug))
+                # Strip " container linux" suffix if present (e.g., "Flatcar Container Linux" -> "Flatcar")
+                if display_key.endswith(" container linux"):
+                    keys.append(display_key[: -len(" container linux")].strip())
+                # Write the first occurrence only
+                for key in keys:
+                    if key and key not in name_to_status:
+                        name_to_status[key] = status
     return name_to_status
 
 
@@ -359,8 +374,15 @@ def write_audit_markdown(
         # Column headers hyperlinked to their respective sources for quick reference
         lines.append("| Project | [PCC status](./pcc_projects.yaml) | [Landscape status](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor status](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers CSV status](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats status](https://devstats.cncf.io/) | [Artwork status](https://github.com/cncf/artwork/blob/main/README.md) |")
         lines.append("|---|---|---|---|---|---|---|")
-        for name, pcc_status, landscape_status, cm_status, m_status, d_status, a_status in sorted(combined_rows, key=lambda r: r[0].lower()):
-            lines.append(f"| {name} | {pcc_status} | {landscape_status} | {cm_status} | {m_status} | {d_status} | {a_status} |")
+        # Sort by PCC status: forming, sandbox, incubating, graduated, archived; then by project name
+        status_order = {"forming": 0, "sandbox": 1, "incubating": 2, "graduated": 3, "archived": 4}
+        def sort_key(row: Tuple[str, str, str, str, str, str, str]) -> Tuple[int, str]:
+            name, pcc_status, *_ = row
+            return (status_order.get(pcc_status, 99), name.lower())
+        def fmt(v: str) -> str:
+            return v if v else "-"
+        for name, pcc_status, landscape_status, cm_status, m_status, d_status, a_status in sorted(combined_rows, key=sort_key):
+            lines.append(f"| {name} | {fmt(pcc_status)} | {fmt(landscape_status)} | {fmt(cm_status)} | {fmt(m_status)} | {fmt(d_status)} | {fmt(a_status)} |")
 
     with open(AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -397,8 +419,10 @@ def write_full_status_markdown(
             return out
         out.append("| Project | PCC | Landscape | CLOMonitor | Maintainers | DevStats | Artwork |")
         out.append("|---|---|---|---|---|---|---|")
+        def fmt(v: str) -> str:
+            return v if v else "-"
         for name, pcc_status, l_status, cm_status, m_status, d_status, a_status in rows:
-            out.append(f"| {name} | {pcc_status} | {l_status} | {cm_status} | {m_status} | {d_status} | {a_status} |")
+            out.append(f"| {name} | {fmt(pcc_status)} | {fmt(l_status)} | {fmt(cm_status)} | {fmt(m_status)} | {fmt(d_status)} | {fmt(a_status)} |")
         out.append("")
         return out
 
