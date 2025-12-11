@@ -1,0 +1,48 @@
+name: Audit using local Landscape data
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pyyaml beautifulsoup4
+
+      - name: Run audit using local datasources
+        run: |
+          # The script prefers local files in datasources/ and will use them if present.
+          python scripts/audit_landscape_status.py
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update audit outputs using local Landscape data"
+          title: "chore: update audit outputs (local Landscape)"
+          body: |
+            Audit outputs updated using the local copy of Landscape (and other local datasources if present).
+
+            Files updated:
+            - audit/status_audit.md
+            - audit/all_statuses.md
+          branch: automation/audit-local-landscape
+          add-paths: |
+            audit/status_audit.md
+            audit/all_statuses.md
+

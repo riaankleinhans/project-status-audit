@@ -27,26 +27,64 @@ ARTWORK_README_URL = "https://raw.githubusercontent.com/cncf/artwork/main/README
 REPO_ROOT = os.getcwd()
 PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
+ALL_AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "all_statuses.md")
+DATASOURCES_DIR = os.path.join(REPO_ROOT, "datasources")
+LANDSCAPE_SRC_PATH = os.path.join(DATASOURCES_DIR, "landscape.yml")
+CLOMONITOR_SRC_PATH = os.path.join(DATASOURCES_DIR, "clomonitor.yaml")
+MAINTAINERS_SRC_PATH = os.path.join(DATASOURCES_DIR, "project-maintainers.csv")
+DEVSTATS_SRC_PATH = os.path.join(DATASOURCES_DIR, "devstats.html")
+ARTWORK_SRC_PATH = os.path.join(DATASOURCES_DIR, "artwork.md")
 
 
 def ensure_dirs() -> None:
     os.makedirs(os.path.dirname(AUDIT_OUTPUT_PATH), exist_ok=True)
+    os.makedirs(DATASOURCES_DIR, exist_ok=True)
 
 
 def download_landscape_yaml() -> Dict[str, Any]:
+    """
+    Load Landscape YAML from datasources if present; otherwise fetch and persist it.
+    """
+    ensure_dirs()
+    if os.path.exists(LANDSCAPE_SRC_PATH):
+        with open(LANDSCAPE_SRC_PATH, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f.read())
     resp = requests.get(RAW_LANDSCAPE_URL, timeout=60)
     resp.raise_for_status()
-    return yaml.safe_load(resp.text)
+    text = resp.text
+    with open(LANDSCAPE_SRC_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return yaml.safe_load(text)
 
 def download_clomonitor_yaml() -> Any:
+    """
+    Load CLOMonitor cncf.yaml from datasources if present; otherwise fetch and persist it.
+    """
+    ensure_dirs()
+    if os.path.exists(CLOMONITOR_SRC_PATH):
+        with open(CLOMONITOR_SRC_PATH, "r", encoding="utf-8") as f:
+            return yaml.safe_load(f.read())
     resp = requests.get(CLOMONITOR_CNCF_URL, timeout=60)
     resp.raise_for_status()
-    return yaml.safe_load(resp.text)
+    text = resp.text
+    with open(CLOMONITOR_SRC_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return yaml.safe_load(text)
 
 def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
-    resp = requests.get(FOUNDATION_MAINTAINERS_CSV_URL, timeout=60)
-    resp.raise_for_status()
-    text = resp.text
+    """
+    Load Maintainers CSV from datasources if present; otherwise fetch and persist it.
+    """
+    ensure_dirs()
+    if os.path.exists(MAINTAINERS_SRC_PATH):
+        with open(MAINTAINERS_SRC_PATH, "r", encoding="utf-8") as f:
+            text = f.read()
+    else:
+        resp = requests.get(FOUNDATION_MAINTAINERS_CSV_URL, timeout=60)
+        resp.raise_for_status()
+        text = resp.text
+        with open(MAINTAINERS_SRC_PATH, "w", encoding="utf-8") as f:
+            f.write(text)
     # The CSV has a header row where first column header is empty, second is "Project"
     reader = csv.reader(io.StringIO(text))
     rows: List[Dict[str, str]] = []
@@ -64,14 +102,34 @@ def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
     return rows
 
 def download_devstats_html() -> str:
+    """
+    Load DevStats HTML from datasources if present; otherwise fetch and persist it.
+    """
+    ensure_dirs()
+    if os.path.exists(DEVSTATS_SRC_PATH):
+        with open(DEVSTATS_SRC_PATH, "r", encoding="utf-8") as f:
+            return f.read()
     resp = requests.get(DEVSTATS_URL, timeout=60)
     resp.raise_for_status()
-    return resp.text
+    text = resp.text
+    with open(DEVSTATS_SRC_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return text
 
 def download_artwork_readme() -> str:
+    """
+    Load Artwork README from datasources if present; otherwise fetch and persist it.
+    """
+    ensure_dirs()
+    if os.path.exists(ARTWORK_SRC_PATH):
+        with open(ARTWORK_SRC_PATH, "r", encoding="utf-8") as f:
+            return f.read()
     resp = requests.get(ARTWORK_README_URL, timeout=60)
     resp.raise_for_status()
-    return resp.text
+    text = resp.text
+    with open(ARTWORK_SRC_PATH, "w", encoding="utf-8") as f:
+        f.write(text)
+    return text
 
 
 def load_pcc_yaml() -> Dict[str, Any]:
@@ -308,6 +366,66 @@ def write_audit_markdown(
         f.write("\n".join(lines) + "\n")
 
 
+def write_full_status_markdown(
+    all_rows: List[Tuple[str, str, str, str, str, str, str]],
+) -> None:
+    """
+    Write a full report with anomalies first, then all projects grouped by PCC category
+    (Graduated, Incubating, Sandbox), with projects in alphabetical order.
+    """
+    # Compute anomalies: any external source present and different from PCC
+    anomalies: List[Tuple[str, str, str, str, str, str, str]] = []
+    for name, pcc_status, l_status, cm_status, m_status, d_status, a_status in all_rows:
+        norm_pcc = normalize_status(pcc_status)
+        flags = [
+            (l_status and normalize_status(l_status) != norm_pcc),
+            (cm_status and normalize_status(cm_status) != norm_pcc),
+            (m_status and normalize_status(m_status) != norm_pcc),
+            (d_status and normalize_status(d_status) != norm_pcc),
+            (a_status and normalize_status(a_status) != norm_pcc),
+        ]
+        if any(flags):
+            anomalies.append((name, pcc_status, l_status, cm_status, m_status, d_status, a_status))
+
+    def section(title: str, rows: List[Tuple[str, str, str, str, str, str, str]]) -> List[str]:
+        out: List[str] = []
+        out.append(f"## {title}")
+        out.append("")
+        if not rows:
+            out.append("_No entries._")
+            out.append("")
+            return out
+        out.append("| Project | PCC | Landscape | CLOMonitor | Maintainers | DevStats | Artwork |")
+        out.append("|---|---|---|---|---|---|---|")
+        for name, pcc_status, l_status, cm_status, m_status, d_status, a_status in rows:
+            out.append(f"| {name} | {pcc_status} | {l_status} | {cm_status} | {m_status} | {d_status} | {a_status} |")
+        out.append("")
+        return out
+
+    # Group all by PCC category
+    by_cat: Dict[str, List[Tuple[str, str, str, str, str, str, str]]] = {"graduated": [], "incubating": [], "sandbox": []}
+    for row in all_rows:
+        _, pcc_status, *_ = row
+        cat = normalize_status(pcc_status)
+        if cat in by_cat:
+            by_cat[cat].append(row)
+
+    # Sort alphabetical within each section
+    for k in list(by_cat.keys()):
+        by_cat[k] = sorted(by_cat[k], key=lambda r: r[0].lower())
+
+    lines: List[str] = []
+    lines.append("# CNCF Project Statuses")
+    lines.append("")
+    lines.extend(section("Anomalies", sorted(anomalies, key=lambda r: r[0].lower())))
+    lines.extend(section("Graduated", by_cat["graduated"]))
+    lines.extend(section("Incubating", by_cat["incubating"]))
+    lines.extend(section("Sandbox", by_cat["sandbox"]))
+
+    with open(ALL_AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+
+
 def main() -> None:
     ensure_dirs()
     pcc = load_pcc_yaml()
@@ -324,18 +442,22 @@ def main() -> None:
     expected = collect_pcc_expected_statuses(pcc)
 
     combined_rows: List[Tuple[str, str, str, str, str, str, str]] = []
+    all_rows: List[Tuple[str, str, str, str, str, str, str]] = []
     for name, pcc_status in expected:
         norm_pcc = normalize_status(pcc_status)
-        l_status_raw = landscape_map.get(normalize_name(name))
-        cm_status_raw = clomonitor_map.get(normalize_name(name))
-        m_status_raw = maintainers_map.get(normalize_name(name))
-        d_status_raw = devstats_map.get(normalize_name(name))
-        a_status_raw = artwork_map.get(normalize_name(name))
+        key = normalize_name(name)
+        l_status_raw = landscape_map.get(key)
+        cm_status_raw = clomonitor_map.get(key)
+        m_status_raw = maintainers_map.get(key)
+        d_status_raw = devstats_map.get(key)
+        a_status_raw = artwork_map.get(key)
         l_status = normalize_status(l_status_raw) if l_status_raw else ""
         cm_status = normalize_status(cm_status_raw) if cm_status_raw else ""
         m_status = normalize_status(m_status_raw) if m_status_raw else ""
         d_status = normalize_status(d_status_raw) if d_status_raw else ""
         a_status = normalize_status(a_status_raw) if a_status_raw else ""
+
+        all_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status, a_status))
 
         landscape_mismatch = bool(l_status) and (l_status != norm_pcc)
         clomonitor_mismatch = bool(cm_status) and (cm_status != norm_pcc)
@@ -347,6 +469,7 @@ def main() -> None:
             combined_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status, a_status))
 
     write_audit_markdown(combined_rows)
+    write_full_status_markdown(all_rows)
     print(f"Wrote audit with {len(combined_rows)} mismatches to {AUDIT_OUTPUT_PATH}")
 
 
