@@ -31,6 +31,14 @@ jobs:
           LFX_TOKEN: ${{ secrets.LFX_TOKEN }}
         run: |
           python scripts/fetch_pcc_projects.py
+      - name: Fetch external data sources
+        run: |
+          mkdir -p datasources
+          curl -fsSL https://raw.githubusercontent.com/cncf/landscape/master/landscape.yml -o datasources/landscape.yml
+          curl -fsSL https://raw.githubusercontent.com/cncf/clomonitor/main/data/cncf.yaml -o datasources/clomonitor.yaml
+          curl -fsSL https://raw.githubusercontent.com/cncf/foundation/main/project-maintainers.csv -o datasources/project-maintainers.csv
+          curl -fsSL https://devstats.cncf.io/ -o datasources/devstats.html
+          curl -fsSL https://raw.githubusercontent.com/cncf/artwork/main/README.md -o datasources/artwork.md
       - name: Generate status audit
         run: |
           python scripts/audit_landscape_status.py
@@ -49,5 +57,7 @@ jobs:
           add-paths: |
             pcc_projects.yaml
             audit/status_audit.md
+            audit/all_statuses.md
+            datasources/**
 
 
