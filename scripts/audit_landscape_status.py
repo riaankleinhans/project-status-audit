@@ -143,6 +143,76 @@ def load_pcc_yaml() -> Dict[str, Any]:
 def normalize_name(name: str) -> str:
     return (name or "").strip().lower()
 
+def _nfkd_ascii(text: str) -> str:
+    text = (text or "").replace("³", "3")
+    import unicodedata
+    nfkd = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in nfkd if not unicodedata.combining(ch))
+
+def normalize_key(name: str) -> str:
+    s = _nfkd_ascii(name).lower().strip()
+    s = s.replace("_", " ")
+    s = " ".join(s.split())
+    return s
+
+def _remove_parentheticals(s: str) -> str:
+    import re
+    return re.sub(r"\s*\([^)]*\)", "", s).strip()
+
+def _extract_parenthetical_tokens(s: str) -> List[str]:
+    import re
+    tokens: List[str] = []
+    for part in re.findall(r"\(([^)]*)\)", s):
+        for t in part.replace("/", " ").replace("-", " ").split():
+            t = normalize_key(t)
+            if t:
+                tokens.append(t)
+    return tokens
+
+COMMON_SUFFIXES = (" project", " specification", " operator", " framework")
+
+def _remove_common_suffixes(s: str) -> List[str]:
+    outs = {s}
+    for suf in COMMON_SUFFIXES:
+        if s.endswith(suf):
+            outs.add(s[: -len(suf)].strip())
+    return list(outs)
+
+def _hyphen_space_variants(s: str) -> List[str]:
+    if not s:
+        return []
+    v1 = " ".join(s.replace("-", " ").split())
+    v2 = s.replace(" ", "-")
+    return list({s, v1, v2})
+
+def generate_aliases_from_landscape(name: str, extra: Any) -> List[str]:
+    aliases: List[str] = []
+    base = normalize_key(name)
+    if not base:
+        return []
+    aliases.append(base)
+    no_paren = normalize_key(_remove_parentheticals(name))
+    if no_paren and no_paren not in aliases:
+        aliases.append(no_paren)
+    for tok in _extract_parenthetical_tokens(name):
+        if tok and tok not in aliases:
+            aliases.append(tok)
+    for candidate in list(aliases):
+        for trimmed in _remove_common_suffixes(candidate):
+            if trimmed and trimmed not in aliases:
+                aliases.append(trimmed)
+            with_proj = f"{trimmed} project".strip()
+            if with_proj and with_proj not in aliases:
+                aliases.append(with_proj)
+    for candidate in list(aliases):
+        for v in _hyphen_space_variants(candidate):
+            if v and v not in aliases:
+                aliases.append(v)
+    if isinstance(extra, dict):
+        lfx_slug = normalize_key((extra.get("lfx_slug") or ""))
+        if lfx_slug and lfx_slug not in aliases:
+            aliases.append(lfx_slug)
+    return aliases
 
 def normalize_status(value: str) -> str:
     if not value:
@@ -178,23 +248,9 @@ def build_landscape_status_map(landscape_data: Dict[str, Any]) -> Dict[str, str]
                 if not status:
                     # Non-CNCF or missing project status; skip
                     continue
-                # Build multiple keys for robust matching:
-                # - exact display name
-                # - lfx_slug when present
-                # - common suffix-stripped variant: " Container Linux"
-                keys: List[str] = []
-                display_key = normalize_name(name)
-                keys.append(display_key)
-                # lfx_slug alias
                 extra = item.get("extra") or {}
-                lfx_slug = (extra.get("lfx_slug") or "").strip()
-                if lfx_slug:
-                    keys.append(normalize_name(lfx_slug))
-                # Strip " container linux" suffix if present (e.g., "Flatcar Container Linux" -> "Flatcar")
-                if display_key.endswith(" container linux"):
-                    keys.append(display_key[: -len(" container linux")].strip())
-                # Write the first occurrence only
-                for key in keys:
+                # Generate robust alias keys for matching Landscape items to PCC names
+                for key in generate_aliases_from_landscape(name, extra):
                     if key and key not in name_to_status:
                         name_to_status[key] = status
     return name_to_status
@@ -426,8 +482,23 @@ def write_full_status_markdown(
         out.append("")
         return out
 
-    # Group all by PCC category
-    by_cat: Dict[str, List[Tuple[str, str, str, str, str, str, str]]] = {"graduated": [], "incubating": [], "sandbox": []}
+    # Sort helpers (match anomalies table order)
+    status_order = {"graduated": 0, "incubating": 1, "sandbox": 2, "forming": 3, "archived": 4}
+    def status_then_name(row: Tuple[str, str, str, str, str, str, str]) -> Tuple[int, str]:
+        name, pcc_status, *_ = row
+        return (status_order.get(normalize_status(pcc_status), 99), name.lower())
+
+    # Sort anomalies by PCC status then name
+    anomalies_sorted = sorted(anomalies, key=status_then_name)
+
+    # Group all by PCC category (include forming and archived too)
+    by_cat: Dict[str, List[Tuple[str, str, str, str, str, str, str]]] = {
+        "graduated": [],
+        "incubating": [],
+        "sandbox": [],
+        "forming": [],
+        "archived": [],
+    }
     for row in all_rows:
         _, pcc_status, *_ = row
         cat = normalize_status(pcc_status)
@@ -441,10 +512,13 @@ def write_full_status_markdown(
     lines: List[str] = []
     lines.append("# CNCF Project Statuses")
     lines.append("")
-    lines.extend(section("Anomalies", sorted(anomalies, key=lambda r: r[0].lower())))
+    lines.extend(section("Anomalies", anomalies_sorted))
+    # Sections in the requested sort order
     lines.extend(section("Graduated", by_cat["graduated"]))
     lines.extend(section("Incubating", by_cat["incubating"]))
     lines.extend(section("Sandbox", by_cat["sandbox"]))
+    lines.extend(section("Forming", by_cat["forming"]))
+    lines.extend(section("Archived", by_cat["archived"]))
 
     with open(ALL_AUDIT_OUTPUT_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -469,8 +543,30 @@ def main() -> None:
     all_rows: List[Tuple[str, str, str, str, str, str, str]] = []
     for name, pcc_status in expected:
         norm_pcc = normalize_status(pcc_status)
+        # Build multiple query keys for Landscape lookup
+        query_keys: List[str] = []
+        base_key = normalize_key(name)
+        query_keys.append(base_key)
+        no_paren = normalize_key(_remove_parentheticals(name))
+        if no_paren and no_paren not in query_keys:
+            query_keys.append(no_paren)
+        for candidate in list(query_keys):
+            for trimmed in _remove_common_suffixes(candidate):
+                if trimmed and trimmed not in query_keys:
+                    query_keys.append(trimmed)
+        for candidate in list(query_keys):
+            for v in _hyphen_space_variants(candidate):
+                if v and v not in query_keys:
+                    query_keys.append(v)
+        for tok in _extract_parenthetical_tokens(name):
+            if tok and tok not in query_keys:
+                query_keys.append(tok)
+        l_status_raw = ""
+        for k in query_keys:
+            if k in landscape_map:
+                l_status_raw = landscape_map[k]
+                break
         key = normalize_name(name)
-        l_status_raw = landscape_map.get(key)
         cm_status_raw = clomonitor_map.get(key)
         m_status_raw = maintainers_map.get(key)
         d_status_raw = devstats_map.get(key)
