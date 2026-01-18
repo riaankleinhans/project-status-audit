@@ -451,18 +451,20 @@ def write_full_status_markdown(
     Write a full report with anomalies first, then all projects grouped by PCC category
     (Graduated, Incubating, Sandbox), with projects in alphabetical order.
     """
-    # Compute anomalies: any external source present and different from PCC
+    # Compute anomalies: include projects with ANY missing value ('-' after formatting) OR
+    # any external source present and different from PCC
     anomalies: List[Tuple[str, str, str, str, str, str, str]] = []
     for name, pcc_status, l_status, cm_status, m_status, d_status, a_status in all_rows:
         norm_pcc = normalize_status(pcc_status)
-        flags = [
-            (l_status and normalize_status(l_status) != norm_pcc),
+        missing_any = (l_status == "-") or (not cm_status) or (not m_status) or (not d_status) or (not a_status)
+        differs_any = any([
+            (l_status and l_status != norm_pcc and l_status != "-"),
             (cm_status and normalize_status(cm_status) != norm_pcc),
             (m_status and normalize_status(m_status) != norm_pcc),
             (d_status and normalize_status(d_status) != norm_pcc),
             (a_status and normalize_status(a_status) != norm_pcc),
-        ]
-        if any(flags):
+        ])
+        if missing_any or differs_any:
             anomalies.append((name, pcc_status, l_status, cm_status, m_status, d_status, a_status))
 
     def section(title: str, rows: List[Tuple[str, str, str, str, str, str, str]]) -> List[str]:
@@ -581,14 +583,17 @@ def main() -> None:
 
         all_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status, a_status))
 
-        # Missing Landscape ('-') or differing status are both anomalies
+        # Anomaly criteria:
+        # - Any missing value in any source (displayed as '-' later; Landscape missing is already '-')
+        # - OR any source present and different from PCC
         landscape_mismatch = (l_status == "-") or (l_status != norm_pcc)
         clomonitor_mismatch = bool(cm_status) and (cm_status != norm_pcc)
         maintainers_mismatch = bool(m_status) and (m_status != norm_pcc)
         devstats_mismatch = bool(d_status) and (d_status != norm_pcc)
         artwork_mismatch = bool(a_status) and (a_status != norm_pcc)
+        any_missing = (l_status == "-") or (not cm_status) or (not m_status) or (not d_status) or (not a_status)
 
-        if landscape_mismatch or clomonitor_mismatch or maintainers_mismatch or devstats_mismatch or artwork_mismatch:
+        if any_missing or landscape_mismatch or clomonitor_mismatch or maintainers_mismatch or devstats_mismatch or artwork_mismatch:
             combined_rows.append((name, norm_pcc, l_status, cm_status, m_status, d_status, a_status))
 
     write_audit_markdown(combined_rows)
