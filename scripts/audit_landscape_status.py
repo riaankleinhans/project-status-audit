@@ -374,8 +374,8 @@ def write_audit_markdown(
         # Column headers hyperlinked to their respective sources for quick reference
         lines.append("| Project | [PCC status](./pcc_projects.yaml) | [Landscape status](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor status](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers CSV status](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats status](https://devstats.cncf.io/) | [Artwork status](https://github.com/cncf/artwork/blob/main/README.md) |")
         lines.append("|---|---|---|---|---|---|---|")
-        # Sort by PCC status: forming, sandbox, incubating, graduated, archived; then by project name
-        status_order = {"forming": 0, "sandbox": 1, "incubating": 2, "graduated": 3, "archived": 4}
+        # Sort by PCC status: graduated, incubating, sandbox, forming, archived; then by project name
+        status_order = {"graduated": 0, "incubating": 1, "sandbox": 2, "forming": 3, "archived": 4}
         def sort_key(row: Tuple[str, str, str, str, str, str, str]) -> Tuple[int, str]:
             name, pcc_status, *_ = row
             return (status_order.get(pcc_status, 99), name.lower())
