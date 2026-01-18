@@ -5,7 +5,7 @@
 | Agones | forming | - | - | - | - | - |
 | AIBrix | forming | - | - | - | - | - |
 | BLAFS | forming | - | - | - | - | - |
-| Cedar | forming | - | - | - | - | - |
+| Cedar | forming | sandbox | - | - | - | - |
 | CoHDI | forming | - | - | - | - | - |
 | Cruise | forming | - | - | - | - | - |
 | CubeCOS | forming | - | - | - | - | - |
@@ -13,30 +13,29 @@
 | DevOps AI Toolkit | forming | - | - | - | - | - |
 | Dexfile | forming | - | - | - | - | - |
 | Gthulhu | forming | - | - | - | - | - |
+| Higress | forming | - | - | - | - | - |
 | KAI Scheduler | forming | - | - | - | - | - |
 | Kmesh | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
 | ksctl | forming | - | - | - | - | - |
 | KubeElasti | forming | - | - | - | - | - |
 | NMstate | forming | - | - | - | - | - |
-| OpenChoreo | forming | - | - | - | - | - |
 | OptiFlow (AI‑OrchestrateX) | forming | - | - | - | - | - |
 | Schema Driven Configuration | forming | - | - | - | - | - |
 | Sermant | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
 | ServiceRadar | forming | - | - | - | - | - |
 | Terrascan | forming | - | - | - | - | - |
 | External Secrets Operator | sandbox | - | - | sandbox | sandbox | - |
-| Fluid Project | sandbox | - | - | - | - | - |
 | Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
-| HolmesGPT | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | Kubernetes AI Toolchain Operator (KAITO) | sandbox | - | sandbox | - | - | - |
 | Logging Operator | sandbox | - | - | sandbox | sandbox | - |
 | Open Policy Registry (OPCR) | sandbox | - | - | - | - | - |
+| OpenChoreo | sandbox | - | - | - | - | - |
 | ORAS (OCI Registry as Storage) | sandbox | - | - | sandbox | - | - |
 | Serverless Workflow Specification | sandbox | - | - | sandbox | - | sandbox |
 | Service Mesh Performance | sandbox | archived | - | - | - | - |
 | Spin | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | VS Code Kubernetes Tools | sandbox | - | - | - | sandbox | - |
-| Dragonfly | incubating | graduated | graduated | graduated | graduated | graduated |
+| Fluid Project | incubating | - | - | - | - | - |
 | metal3-io | incubating | - | - | incubating | - | - |
 | Notary | incubating | - | incubating | incubating | incubating | - |
 | Open Policy Agent | graduated | - | graduated | graduated | - | - |

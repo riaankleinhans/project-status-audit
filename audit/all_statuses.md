@@ -7,7 +7,7 @@
 | Agones | forming | - | - | - | - | - |
 | AIBrix | forming | - | - | - | - | - |
 | BLAFS | forming | - | - | - | - | - |
-| Cedar | forming | - | - | - | - | - |
+| Cedar | forming | sandbox | - | - | - | - |
 | Cluster API Provider for CloudStack(CAPC) | archived | - | - | - | - | - |
 | CNCF Standards & Specifications | archived | - | - | - | - | - |
 | CoHDI | forming | - | - | - | - | - |
@@ -17,13 +17,12 @@
 | deploy-sh | archived | - | - | - | - | - |
 | DevOps AI Toolkit | forming | - | - | - | - | - |
 | Dexfile | forming | - | - | - | - | - |
-| Dragonfly | incubating | graduated | graduated | graduated | graduated | graduated |
 | EGo | archived | - | - | - | - | - |
 | External Secrets Operator | sandbox | - | - | sandbox | sandbox | - |
-| Fluid Project | sandbox | - | - | - | - | - |
+| Fluid Project | incubating | - | - | - | - | - |
 | Gthulhu | forming | - | - | - | - | - |
 | Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
-| HolmesGPT | sandbox | - | sandbox | sandbox | sandbox | sandbox |
+| Higress | forming | - | - | - | - | - |
 | IO Flow | archived | - | - | - | - | - |
 | joylive-agent | archived | - | - | - | - | - |
 | KAI Scheduler | forming | - | - | - | - | - |
@@ -44,7 +43,7 @@
 | Notary | incubating | - | incubating | incubating | incubating | - |
 | Open Policy Agent | graduated | - | graduated | graduated | - | - |
 | Open Policy Registry (OPCR) | sandbox | - | - | - | - | - |
-| OpenChoreo | forming | - | - | - | - | - |
+| OpenChoreo | sandbox | - | - | - | - | - |
 | OptiFlow (AI‑OrchestrateX) | forming | - | - | - | - | - |
 | ORAS (OCI Registry as Storage) | sandbox | - | - | sandbox | - | - |
 | pallet | archived | - | - | - | - | - |
@@ -79,6 +78,7 @@
 | Crossplane | graduated | graduated | graduated | graduated | graduated | graduated |
 | CubeFS | graduated | graduated | graduated | graduated | graduated | graduated |
 | Dapr | graduated | graduated | - | graduated | graduated | graduated |
+| Dragonfly | graduated | graduated | graduated | graduated | graduated | graduated |
 | Envoy | graduated | graduated | graduated | graduated | graduated | graduated |
 | Etcd | graduated | graduated | graduated | graduated | graduated | graduated |
 | Falco | graduated | graduated | graduated | graduated | graduated | graduated |
@@ -115,9 +115,9 @@
 | CNI | incubating | incubating | - | incubating | incubating | incubating |
 | Contour | incubating | incubating | incubating | incubating | incubating | incubating |
 | Cortex | incubating | incubating | incubating | incubating | incubating | incubating |
-| Dragonfly | incubating | graduated | graduated | graduated | graduated | graduated |
 | emissary-ingress | incubating | incubating | incubating | incubating | incubating | incubating |
 | Flatcar | incubating | incubating | incubating | - | incubating | incubating |
+| Fluid Project | incubating | - | - | - | - | - |
 | gRPC | incubating | incubating | incubating | incubating | incubating | incubating |
 | karmada | incubating | incubating | incubating | incubating | incubating | incubating |
 | Keycloak | incubating | incubating | incubating | incubating | incubating | incubating |
@@ -185,11 +185,10 @@
 | easegress | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Eraser | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | External Secrets Operator | sandbox | - | - | sandbox | sandbox | - |
-| Fluid Project | sandbox | - | - | - | - | - |
 | HAMi | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | Hexa | sandbox | sandbox | - | - | - | sandbox |
-| HolmesGPT | sandbox | - | sandbox | sandbox | sandbox | sandbox |
+| HolmesGPT | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | HwameiStor | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Hyperlight | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Inclavare Containers | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
@@ -243,6 +242,7 @@
 | OAuth2 Proxy | sandbox | sandbox | sandbox | sandbox | - | - |
 | Open Cluster Management | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Open Policy Registry (OPCR) | sandbox | - | - | - | - | - |
+| OpenChoreo | sandbox | - | - | - | - | - |
 | OpenEBS | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | OpenFunction | sandbox | sandbox | - | sandbox | sandbox | sandbox |
 | openGemini | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
@@ -279,7 +279,7 @@
 | Telepresence | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Tinkerbell | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Tokenetes | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| Tremor | sandbox | sandbox | sandbox | - | sandbox | sandbox |
+| Tremor | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | TrestleGRC | sandbox | sandbox | - | - | sandbox | - |
 | Trickster | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | urunc | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
