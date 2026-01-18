@@ -2,18 +2,9 @@
 
 | Project | [PCC status](./pcc_projects.yaml) | [Landscape status](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor status](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers CSV status](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats status](https://devstats.cncf.io/) | [Artwork status](https://github.com/cncf/artwork/blob/main/README.md) |
 |---|---|---|---|---|---|---|
-| Open Policy Agent | graduated | - | graduated | graduated | - | - |
-| Fluid Project | incubating | - | - | - | - | - |
 | metal3-io | incubating | - | - | incubating | - | - |
-| Notary | incubating | - | incubating | incubating | incubating | - |
-| External Secrets Operator | sandbox | - | - | sandbox | sandbox | - |
 | Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
-| Kubernetes AI Toolchain Operator (KAITO) | sandbox | - | sandbox | - | - | - |
-| Logging Operator | sandbox | - | - | sandbox | sandbox | - |
-| Open Policy Registry (OPCR) | sandbox | - | - | - | - | - |
 | OpenChoreo | sandbox | - | - | - | - | - |
-| ORAS (OCI Registry as Storage) | sandbox | - | - | sandbox | - | - |
-| Serverless Workflow Specification | sandbox | - | - | sandbox | - | sandbox |
 | Service Mesh Performance | sandbox | archived | - | - | - | - |
 | Spin | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | VS Code Kubernetes Tools | sandbox | - | - | - | sandbox | - |
@@ -54,7 +45,6 @@
 | Matos | archived | - | - | - | - | - |
 | pallet | archived | - | - | - | - | - |
 | rainforest | archived | - | - | - | - | - |
-| Service Mesh Interface | archived | - | - | - | - | archived |
 | Silver Surfer | archived | - | - | - | - | - |
 | Tarian | archived | - | - | - | - | - |
 | test | archived | - | - | - | - | - |

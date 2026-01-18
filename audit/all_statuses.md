@@ -4,63 +4,53 @@
 
 | Project | PCC | Landscape | CLOMonitor | Maintainers | DevStats | Artwork |
 |---|---|---|---|---|---|---|
+| metal3-io | incubating | - | - | incubating | - | - |
+| Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
+| OpenChoreo | sandbox | - | - | - | - | - |
+| Service Mesh Performance | sandbox | archived | - | - | - | - |
+| Spin | sandbox | - | sandbox | sandbox | sandbox | sandbox |
+| VS Code Kubernetes Tools | sandbox | - | - | - | sandbox | - |
 | Agones | forming | - | - | - | - | - |
 | AIBrix | forming | - | - | - | - | - |
 | BLAFS | forming | - | - | - | - | - |
 | Cedar | forming | sandbox | - | - | - | - |
-| Cluster API Provider for CloudStack(CAPC) | archived | - | - | - | - | - |
-| CNCF Standards & Specifications | archived | - | - | - | - | - |
 | CoHDI | forming | - | - | - | - | - |
 | Cruise | forming | - | - | - | - | - |
 | CubeCOS | forming | - | - | - | - | - |
 | Curvine | forming | - | - | - | - | - |
-| deploy-sh | archived | - | - | - | - | - |
 | DevOps AI Toolkit | forming | - | - | - | - | - |
 | Dexfile | forming | - | - | - | - | - |
-| EGo | archived | - | - | - | - | - |
-| External Secrets Operator | sandbox | - | - | sandbox | sandbox | - |
-| Fluid Project | incubating | - | - | - | - | - |
 | Gthulhu | forming | - | - | - | - | - |
-| Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | Higress | forming | - | - | - | - | - |
+| KAI Scheduler | forming | - | - | - | - | - |
+| Kmesh | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
+| ksctl | forming | - | - | - | - | - |
+| KubeElasti | forming | - | - | - | - | - |
+| NMstate | forming | - | - | - | - | - |
+| OptiFlow (AI‑OrchestrateX) | forming | - | - | - | - | - |
+| Schema Driven Configuration | forming | - | - | - | - | - |
+| Sermant | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
+| ServiceRadar | forming | - | - | - | - | - |
+| Terrascan | forming | - | - | - | - | - |
+| Cluster API Provider for CloudStack(CAPC) | archived | - | - | - | - | - |
+| CNCF Standards & Specifications | archived | - | - | - | - | - |
+| deploy-sh | archived | - | - | - | - | - |
+| EGo | archived | - | - | - | - | - |
 | IO Flow | archived | - | - | - | - | - |
 | joylive-agent | archived | - | - | - | - | - |
-| KAI Scheduler | forming | - | - | - | - | - |
 | Kepimetheus | archived | - | - | - | - | - |
 | Ketch | archived | - | - | - | - | - |
 | KLTS | archived | - | - | - | - | - |
-| Kmesh | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
 | KSail | archived | - | - | - | - | - |
-| ksctl | forming | - | - | - | - | - |
-| KubeElasti | forming | - | - | - | - | - |
-| Kubernetes AI Toolchain Operator (KAITO) | sandbox | - | sandbox | - | - | - |
 | Lagoon | archived | - | - | - | - | - |
-| Logging Operator | sandbox | - | - | sandbox | sandbox | - |
 | MarbleRun | archived | - | - | - | - | - |
 | Matos | archived | - | - | - | - | - |
-| metal3-io | incubating | - | - | incubating | - | - |
-| NMstate | forming | - | - | - | - | - |
-| Notary | incubating | - | incubating | incubating | incubating | - |
-| Open Policy Agent | graduated | - | graduated | graduated | - | - |
-| Open Policy Registry (OPCR) | sandbox | - | - | - | - | - |
-| OpenChoreo | sandbox | - | - | - | - | - |
-| OptiFlow (AI‑OrchestrateX) | forming | - | - | - | - | - |
-| ORAS (OCI Registry as Storage) | sandbox | - | - | sandbox | - | - |
 | pallet | archived | - | - | - | - | - |
 | rainforest | archived | - | - | - | - | - |
-| Schema Driven Configuration | forming | - | - | - | - | - |
-| Sermant | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
-| Serverless Workflow Specification | sandbox | - | - | sandbox | - | sandbox |
-| Service Mesh Interface | archived | - | - | - | - | archived |
-| Service Mesh Performance | sandbox | archived | - | - | - | - |
-| ServiceRadar | forming | - | - | - | - | - |
 | Silver Surfer | archived | - | - | - | - | - |
-| Spin | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | Tarian | archived | - | - | - | - | - |
-| Terrascan | forming | - | - | - | - | - |
 | test | archived | - | - | - | - | - |
 | Turnbuckle | archived | - | - | - | - | - |
-| VS Code Kubernetes Tools | sandbox | - | - | - | sandbox | - |
 | Wasm Mock Server | archived | - | - | - | - | - |
 | Yoke | archived | - | - | - | - | - |
 
@@ -94,7 +84,7 @@
 | KubeEdge | graduated | graduated | graduated | graduated | graduated | graduated |
 | Kubernetes | graduated | graduated | graduated | - | graduated | graduated |
 | Linkerd | graduated | graduated | graduated | graduated | graduated | graduated |
-| Open Policy Agent | graduated | - | graduated | graduated | - | - |
+| Open Policy Agent | graduated | graduated | graduated | graduated | - | - |
 | Prometheus | graduated | graduated | graduated | graduated | graduated | graduated |
 | Rook | graduated | graduated | graduated | graduated | graduated | graduated |
 | SPIFFE | graduated | graduated | graduated | graduated | graduated | graduated |
@@ -117,7 +107,7 @@
 | Cortex | incubating | incubating | incubating | incubating | incubating | incubating |
 | emissary-ingress | incubating | incubating | incubating | incubating | incubating | incubating |
 | Flatcar | incubating | incubating | incubating | - | incubating | incubating |
-| Fluid Project | incubating | - | - | - | - | - |
+| Fluid Project | incubating | incubating | - | - | - | - |
 | gRPC | incubating | incubating | incubating | incubating | incubating | incubating |
 | karmada | incubating | incubating | incubating | incubating | incubating | incubating |
 | Keycloak | incubating | incubating | incubating | incubating | incubating | incubating |
@@ -132,7 +122,7 @@
 | Longhorn | incubating | incubating | incubating | incubating | incubating | incubating |
 | metal3-io | incubating | - | - | incubating | - | - |
 | NATS | incubating | incubating | incubating | incubating | incubating | incubating |
-| Notary | incubating | - | incubating | incubating | incubating | - |
+| Notary | incubating | incubating | incubating | incubating | incubating | - |
 | OpenCost | incubating | incubating | incubating | incubating | incubating | incubating |
 | OpenFeature | incubating | incubating | incubating | incubating | incubating | incubating |
 | OpenFGA | incubating | incubating | incubating | incubating | incubating | incubating |
@@ -184,7 +174,7 @@
 | Drasi | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | easegress | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Eraser | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| External Secrets Operator | sandbox | - | - | sandbox | sandbox | - |
+| External Secrets Operator | sandbox | sandbox | - | sandbox | sandbox | - |
 | HAMi | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | Hexa | sandbox | sandbox | - | - | - | sandbox |
@@ -224,7 +214,7 @@
 | Kubeclipper | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | KubeFleet | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Kuberhealthy | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| Kubernetes AI Toolchain Operator (KAITO) | sandbox | - | sandbox | - | - | - |
+| Kubernetes AI Toolchain Operator (KAITO) | sandbox | sandbox | sandbox | - | - | - |
 | KubeSlice | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | KubeStellar | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | kubewarden | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
@@ -232,7 +222,7 @@
 | Kuma | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Kured | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | KusionStack | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| Logging Operator | sandbox | - | - | sandbox | sandbox | - |
+| Logging Operator | sandbox | sandbox | - | sandbox | sandbox | - |
 | LoxiLB | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Meshery | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | MetalLB | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
@@ -241,14 +231,14 @@
 | Network Service Mesh | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | OAuth2 Proxy | sandbox | sandbox | sandbox | sandbox | - | - |
 | Open Cluster Management | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| Open Policy Registry (OPCR) | sandbox | - | - | - | - | - |
+| Open Policy Registry (OPCR) | sandbox | sandbox | - | - | - | - |
 | OpenChoreo | sandbox | - | - | - | - | - |
 | OpenEBS | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | OpenFunction | sandbox | sandbox | - | sandbox | sandbox | sandbox |
 | openGemini | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | OpenGitOps | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | OpenTofu | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| ORAS (OCI Registry as Storage) | sandbox | - | - | sandbox | - | - |
+| ORAS (OCI Registry as Storage) | sandbox | sandbox | - | sandbox | - | - |
 | OVN-Kubernetes | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Oxia | sandbox | sandbox | sandbox | - | sandbox | - |
 | Paralus | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
@@ -266,7 +256,7 @@
 | SchemaHero | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Score | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Serverless Devs | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
-| Serverless Workflow Specification | sandbox | - | - | sandbox | - | sandbox |
+| Serverless Workflow Specification | sandbox | sandbox | - | sandbox | - | sandbox |
 | Service Mesh Performance | sandbox | archived | - | - | - | - |
 | Shipwright | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | SlimFaaS | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
@@ -291,4 +281,82 @@
 | xRegistry | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | Youki | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
 | zot | sandbox | sandbox | sandbox | sandbox | sandbox | sandbox |
+
+## Forming
+
+| Project | PCC | Landscape | CLOMonitor | Maintainers | DevStats | Artwork |
+|---|---|---|---|---|---|---|
+| Agones | forming | - | - | - | - | - |
+| AIBrix | forming | - | - | - | - | - |
+| BLAFS | forming | - | - | - | - | - |
+| Cedar | forming | sandbox | - | - | - | - |
+| CoHDI | forming | - | - | - | - | - |
+| Cruise | forming | - | - | - | - | - |
+| CubeCOS | forming | - | - | - | - | - |
+| Curvine | forming | - | - | - | - | - |
+| DevOps AI Toolkit | forming | - | - | - | - | - |
+| Dexfile | forming | - | - | - | - | - |
+| Gthulhu | forming | - | - | - | - | - |
+| Higress | forming | - | - | - | - | - |
+| KAI Scheduler | forming | - | - | - | - | - |
+| Kmesh | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
+| ksctl | forming | - | - | - | - | - |
+| KubeElasti | forming | - | - | - | - | - |
+| NMstate | forming | - | - | - | - | - |
+| OptiFlow (AI‑OrchestrateX) | forming | - | - | - | - | - |
+| Schema Driven Configuration | forming | - | - | - | - | - |
+| Sermant | forming | sandbox | sandbox | sandbox | sandbox | sandbox |
+| ServiceRadar | forming | - | - | - | - | - |
+| Terrascan | forming | - | - | - | - | - |
+
+## Archived
+
+| Project | PCC | Landscape | CLOMonitor | Maintainers | DevStats | Artwork |
+|---|---|---|---|---|---|---|
+| Brigade | archived | archived | - | - | - | archived |
+| Cluster API Provider for CloudStack(CAPC) | archived | - | - | - | - | - |
+| CNCF Standards & Specifications | archived | - | - | - | - | - |
+| CNI-Genie | archived | archived | - | - | - | - |
+| Curiefense | archived | archived | - | - | - | archived |
+| Curve | archived | archived | - | - | - | archived |
+| deploy-sh | archived | - | - | - | - | - |
+| Devstream | archived | archived | - | - | - | archived |
+| EGo | archived | - | - | - | - | - |
+| FabEdge | archived | archived | - | - | - | archived |
+| Fonio | archived | archived | - | - | - | archived |
+| IO Flow | archived | - | - | - | - | - |
+| joylive-agent | archived | - | - | - | - | - |
+| Kepimetheus | archived | - | - | - | - | - |
+| Keptn | archived | archived | - | - | - | archived |
+| Ketch | archived | - | - | - | - | - |
+| KLTS | archived | - | - | - | - | - |
+| Krator | archived | archived | - | - | - | archived |
+| Krustlet | archived | archived | - | - | - | archived |
+| KSail | archived | - | - | - | - | - |
+| KubeDL | archived | archived | - | - | - | archived |
+| Lagoon | archived | - | - | - | - | - |
+| MarbleRun | archived | - | - | - | - | - |
+| Matos | archived | - | - | - | - | - |
+| Merbridge | archived | archived | - | - | - | archived |
+| Nocalhost | archived | archived | - | - | - | archived |
+| Open Service Mesh | archived | archived | - | - | - | archived |
+| OpenELB | archived | archived | - | - | - | archived |
+| OpenMetrics | archived | archived | - | - | - | archived |
+| OpenTracing | archived | archived | - | - | - | archived |
+| pallet | archived | - | - | - | - | - |
+| Pravega | archived | archived | - | - | - | archived |
+| rainforest | archived | - | - | - | - | - |
+| RKT | archived | archived | - | - | - | archived |
+| sealer | archived | archived | - | archived | - | archived |
+| Service Mesh Interface | archived | archived | - | - | - | archived |
+| Silver Surfer | archived | - | - | - | - | - |
+| skooner | archived | archived | - | - | - | archived |
+| SuperEdge | archived | archived | - | - | - | archived |
+| Tarian | archived | - | - | - | - | - |
+| Teller | archived | archived | - | - | - | archived |
+| test | archived | - | - | - | - | - |
+| Turnbuckle | archived | - | - | - | - | - |
+| Wasm Mock Server | archived | - | - | - | - | - |
+| Xline | archived | archived | - | - | - | archived |
+| Yoke | archived | - | - | - | - | - |
 
