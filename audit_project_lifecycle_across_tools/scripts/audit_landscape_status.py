@@ -96,9 +96,14 @@ def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
         # Map to fields by position we care about: 0=status, 1=project
         status = (r[0] if len(r) > 0 else "").strip()
         project = (r[1] if len(r) > 1 else "").strip()
+        url = ""
+        if len(r) >= 6:
+            url_candidate = (r[-1] or "").strip()
+            if url_candidate.startswith("http"):
+                url = url_candidate
         if not project:
             continue
-        rows.append({"status": status, "project": project})
+        rows.append({"status": status, "project": project, "url": url})
     return rows
 
 def download_devstats_html() -> str:
@@ -169,7 +174,7 @@ def _extract_parenthetical_tokens(s: str) -> List[str]:
                 tokens.append(t)
     return tokens
 
-COMMON_SUFFIXES = (" project", " specification", " operator", " framework")
+COMMON_SUFFIXES = (" project", " specification", " operator", " framework", " container linux")
 
 def _remove_common_suffixes(s: str) -> List[str]:
     outs = {s}
@@ -185,6 +190,24 @@ def _hyphen_space_variants(s: str) -> List[str]:
     v2 = s.replace(" ", "-")
     return list({s, v1, v2})
 
+def _compact_key(s: str) -> str:
+    # Keep only alphanumerics; drop spaces, hyphens, punctuation and parentheses
+    return "".join(ch for ch in s if ch.isalnum())
+
+def _split_composite_tokens(s: str) -> List[str]:
+    import re
+    parts = re.split(r"\s*(?:/|,|&| and )\s*", s)
+    out: List[str] = []
+    for p in parts:
+        p = p.strip()
+        if p:
+            out.append(p)
+    return out
+
+def _camel_to_words(s: str) -> str:
+    # Insert spaces between camelCase and PascalCase boundaries
+    import re
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", s)
 def generate_aliases_from_landscape(name: str, extra: Any) -> List[str]:
     aliases: List[str] = []
     base = normalize_key(name)
@@ -208,6 +231,21 @@ def generate_aliases_from_landscape(name: str, extra: Any) -> List[str]:
         for v in _hyphen_space_variants(candidate):
             if v and v not in aliases:
                 aliases.append(v)
+    # Composite split (/, &, commas, " and ")
+    for candidate in list(aliases):
+        for part in _split_composite_tokens(candidate):
+            if part and part not in aliases:
+                aliases.append(part)
+    # Compact (no punctuation/spaces) variants for each alias
+    for candidate in list(aliases):
+        compact = _compact_key(candidate)
+        if compact and compact not in aliases:
+            aliases.append(compact)
+    # CamelCase to words variants (then normalized)
+    for candidate in list(aliases):
+        camel = normalize_key(_camel_to_words(candidate))
+        if camel and camel not in aliases:
+            aliases.append(camel)
     if isinstance(extra, dict):
         lfx_slug = normalize_key((extra.get("lfx_slug") or ""))
         if lfx_slug and lfx_slug not in aliases:
@@ -327,16 +365,21 @@ def build_clomonitor_status_map(clomonitor_data: Any) -> Dict[str, str]:
         maturity = normalize_status(entry.get("maturity") or "")
         if not maturity:
             continue
-        # Aliases from display_name
-        for key in (generate_aliases_from_landscape(display_name, {}) if display_name else []):
-            if key and key not in name_to_status:
-                name_to_status[key] = maturity
-        # Aliases from slug
+        # Aliases from display name
+        if display_name:
+            for key in generate_aliases_from_landscape(display_name, {}):
+                if key and key not in name_to_status:
+                    name_to_status[key] = maturity
+        # Aliases from slug (hyphen/space and suffix variants, plus compact)
         if slug:
-            # Slugs are already normalized-ish; still produce variants
             slug_key = normalize_key(slug)
+            candidates = set([slug_key])
             for v in _hyphen_space_variants(slug_key) + _remove_common_suffixes(slug_key):
-                k = v.strip()
+                candidates.add(v.strip())
+            # compact variants
+            for v in list(candidates):
+                candidates.add(_compact_key(v))
+            for k in candidates:
                 if k and k not in name_to_status:
                     name_to_status[k] = maturity
     return name_to_status
@@ -347,14 +390,39 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
     for e in entries:
         project = (e.get("project") or "").strip()
         status = e.get("status") or ""
+        url = (e.get("url") or "").strip()
         if not project or not status:
             continue
         norm_status = normalize_status(status)
         # Filter to statuses we track; skip steering/maintainers pseudo-projects if not in PCC
         if norm_status in ("graduated", "incubating", "sandbox", "archived", "forming"):
-            for key in generate_aliases_from_landscape(project, {}):
+            # Base aliases
+            alias_candidates: List[str] = generate_aliases_from_landscape(project, {})
+            # Add colon-left alias (e.g., "Istio: Steering Committee" -> "Istio")
+            if ":" in project:
+                lhs = project.split(":", 1)[0].strip()
+                if lhs:
+                    alias_candidates.extend(generate_aliases_from_landscape(lhs, {}))
+            # Add first-word alias (e.g., "Kubernetes steering" -> "Kubernetes")
+            first_word = project.split()[0] if project.split() else ""
+            if first_word:
+                alias_candidates.extend(generate_aliases_from_landscape(first_word, {}))
+            # Add '-ai' stripped variant if present (e.g., 'k8sgpt-ai' -> 'k8sgpt')
+            for a in list(alias_candidates):
+                if a.endswith("-ai"):
+                    alias_candidates.append(a[:-3])
+            for key in alias_candidates:
                 if key and key not in name_to_status:
                     name_to_status[key] = norm_status
+            # GitHub URL aliases (org and org/repo)
+            gh = _extract_github_path(url)
+            if gh:
+                parts = gh.split("/")
+                org = parts[0]
+                if org and org not in name_to_status:
+                    name_to_status[org] = norm_status
+                if len(parts) >= 2 and gh not in name_to_status:
+                    name_to_status[gh] = norm_status
     return name_to_status
 
 
@@ -400,6 +468,38 @@ def build_devstats_status_map(html: str) -> Dict[str, str]:
         i += 1
 
     return name_to_status
+
+def _extract_github_path(url: str) -> str:
+    """
+    Return normalized GitHub path key:
+    - 'org/repo' if a repo URL
+    - 'org' if an org URL
+    Empty string if not a GitHub URL or cannot parse.
+    """
+    if not url:
+        return ""
+    u = url.strip().lower()
+    if not (u.startswith("http://") or u.startswith("https://")):
+        return ""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(u)
+        if parsed.netloc != "github.com":
+            return ""
+        path = parsed.path.strip("/")
+        if not path:
+            return ""
+        parts = [p for p in path.split("/") if p]
+        if not parts:
+            return ""
+        if len(parts) == 1:
+            return parts[0]
+        repo = parts[1]
+        if repo.endswith(".git"):
+            repo = repo[:-4]
+        return f"{parts[0]}/{repo}"
+    except Exception:
+        return ""
 
 
 def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, str]]:
@@ -570,6 +670,14 @@ def main() -> None:
             for v in _hyphen_space_variants(candidate):
                 if v and v not in query_keys:
                     query_keys.append(v)
+        # Add compact and camel-case-separated variants
+        for candidate in list(query_keys):
+            comp = _compact_key(candidate)
+            if comp and comp not in query_keys:
+                query_keys.append(comp)
+            camel = normalize_key(_camel_to_words(candidate))
+            if camel and camel not in query_keys:
+                query_keys.append(camel)
         for tok in _extract_parenthetical_tokens(name):
             if tok and tok not in query_keys:
                 query_keys.append(tok)
