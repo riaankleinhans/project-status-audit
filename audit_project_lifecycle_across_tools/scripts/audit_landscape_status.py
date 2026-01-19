@@ -376,19 +376,10 @@ def build_clomonitor_status_map(clomonitor_data: Any) -> Dict[str, str]:
             candidates = set([slug_key])
             for v in _hyphen_space_variants(slug_key) + _remove_common_suffixes(slug_key):
                 candidates.add(v.strip())
+            # compact variants
             for v in list(candidates):
                 candidates.add(_compact_key(v))
             for k in candidates:
-        # Aliases from display_name
-        for key in (generate_aliases_from_landscape(display_name, {}) if display_name else []):
-            if key and key not in name_to_status:
-                name_to_status[key] = maturity
-        # Aliases from slug
-        if slug:
-            # Slugs are already normalized-ish; still produce variants
-            slug_key = normalize_key(slug)
-            for v in _hyphen_space_variants(slug_key) + _remove_common_suffixes(slug_key):
-                k = v.strip()
                 if k and k not in name_to_status:
                     name_to_status[k] = maturity
     return name_to_status
@@ -432,9 +423,6 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
                     name_to_status[org] = norm_status
                 if len(parts) >= 2 and gh not in name_to_status:
                     name_to_status[gh] = norm_status
-            for key in generate_aliases_from_landscape(project, {}):
-                if key and key not in name_to_status:
-                    name_to_status[key] = norm_status
     return name_to_status
 
 
