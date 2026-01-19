@@ -305,9 +305,10 @@ def build_artwork_status_map(readme_text: str) -> Dict[str, str]:
         if current_status and line.lstrip().startswith("* ") and not line.startswith("* "):
             name = parse_bullet_text(line)
             if name:
-                key = normalize_name(name)
-                if key and key not in name_to_status:
-                    name_to_status[key] = current_status
+                # Generate aliases for artwork project names
+                for key in generate_aliases_from_landscape(name, {}):
+                    if key and key not in name_to_status:
+                        name_to_status[key] = current_status
 
     return name_to_status
 
@@ -321,31 +322,39 @@ def build_clomonitor_status_map(clomonitor_data: Any) -> Dict[str, str]:
     for entry in clomonitor_data:
         if not isinstance(entry, dict):
             continue
-        display_name = (entry.get("display_name") or entry.get("name") or "").strip()
-        if not display_name:
-            continue
+        display_name = (entry.get("display_name") or "").strip()
+        slug = (entry.get("name") or "").strip()
         maturity = normalize_status(entry.get("maturity") or "")
         if not maturity:
             continue
-        key = normalize_name(display_name)
-        if key not in name_to_status:
-            name_to_status[key] = maturity
+        # Aliases from display_name
+        for key in (generate_aliases_from_landscape(display_name, {}) if display_name else []):
+            if key and key not in name_to_status:
+                name_to_status[key] = maturity
+        # Aliases from slug
+        if slug:
+            # Slugs are already normalized-ish; still produce variants
+            slug_key = normalize_key(slug)
+            for v in _hyphen_space_variants(slug_key) + _remove_common_suffixes(slug_key):
+                k = v.strip()
+                if k and k not in name_to_status:
+                    name_to_status[k] = maturity
     return name_to_status
 
 
 def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]:
     name_to_status: Dict[str, str] = {}
     for e in entries:
-        project = e.get("project") or ""
+        project = (e.get("project") or "").strip()
         status = e.get("status") or ""
         if not project or not status:
             continue
-        key = normalize_name(project)
         norm_status = normalize_status(status)
         # Filter to statuses we track; skip steering/maintainers pseudo-projects if not in PCC
         if norm_status in ("graduated", "incubating", "sandbox", "archived", "forming"):
-            if key not in name_to_status:
-                name_to_status[key] = norm_status
+            for key in generate_aliases_from_landscape(project, {}):
+                if key and key not in name_to_status:
+                    name_to_status[key] = norm_status
     return name_to_status
 
 
@@ -383,9 +392,9 @@ def build_devstats_status_map(html: str) -> Dict[str, str]:
                     name = (a.get_text() or "").strip()
                     if not name:
                         continue
-                    key = normalize_name(name)
-                    if key and key not in name_to_status:
-                        name_to_status[key] = current_status
+                    for key in generate_aliases_from_landscape(name, {}):
+                        if key and key not in name_to_status:
+                            name_to_status[key] = current_status
                 i += 1
             continue
         i += 1
@@ -569,11 +578,20 @@ def main() -> None:
             if k in landscape_map:
                 l_status_raw = landscape_map[k]
                 break
-        key = normalize_name(name)
-        cm_status_raw = clomonitor_map.get(key)
-        m_status_raw = maintainers_map.get(key)
-        d_status_raw = devstats_map.get(key)
-        a_status_raw = artwork_map.get(key)
+        # Use the same robust key set for other sources
+        cm_status_raw = ""
+        m_status_raw = ""
+        d_status_raw = ""
+        a_status_raw = ""
+        for k in query_keys:
+            if not cm_status_raw and k in clomonitor_map:
+                cm_status_raw = clomonitor_map[k]
+            if not m_status_raw and k in maintainers_map:
+                m_status_raw = maintainers_map[k]
+            if not d_status_raw and k in devstats_map:
+                d_status_raw = devstats_map[k]
+            if not a_status_raw and k in artwork_map:
+                a_status_raw = artwork_map[k]
         # For Landscape, explicitly show '-' when missing to flag anomaly
         l_status = normalize_status(l_status_raw) if l_status_raw else "-"
         # For other sources, keep empty when missing
