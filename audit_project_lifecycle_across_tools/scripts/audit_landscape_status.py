@@ -96,9 +96,14 @@ def download_foundation_maintainers_csv() -> List[Dict[str, str]]:
         # Map to fields by position we care about: 0=status, 1=project
         status = (r[0] if len(r) > 0 else "").strip()
         project = (r[1] if len(r) > 1 else "").strip()
+        url = ""
+        if len(r) >= 6:
+            url_candidate = (r[-1] or "").strip()
+            if url_candidate.startswith("http"):
+                url = url_candidate
         if not project:
             continue
-        rows.append({"status": status, "project": project})
+        rows.append({"status": status, "project": project, "url": url})
     return rows
 
 def download_devstats_html() -> str:
@@ -169,7 +174,7 @@ def _extract_parenthetical_tokens(s: str) -> List[str]:
                 tokens.append(t)
     return tokens
 
-COMMON_SUFFIXES = (" project", " specification", " operator", " framework")
+COMMON_SUFFIXES = (" project", " specification", " operator", " framework", " container linux")
 
 def _remove_common_suffixes(s: str) -> List[str]:
     outs = {s}
@@ -198,6 +203,11 @@ def _split_composite_tokens(s: str) -> List[str]:
         if p:
             out.append(p)
     return out
+
+def _camel_to_words(s: str) -> str:
+    # Insert spaces between camelCase and PascalCase boundaries
+    import re
+    return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", s)
 def generate_aliases_from_landscape(name: str, extra: Any) -> List[str]:
     aliases: List[str] = []
     base = normalize_key(name)
@@ -231,6 +241,11 @@ def generate_aliases_from_landscape(name: str, extra: Any) -> List[str]:
         compact = _compact_key(candidate)
         if compact and compact not in aliases:
             aliases.append(compact)
+    # CamelCase to words variants (then normalized)
+    for candidate in list(aliases):
+        camel = normalize_key(_camel_to_words(candidate))
+        if camel and camel not in aliases:
+            aliases.append(camel)
     if isinstance(extra, dict):
         lfx_slug = normalize_key((extra.get("lfx_slug") or ""))
         if lfx_slug and lfx_slug not in aliases:
@@ -373,6 +388,7 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
     for e in entries:
         project = (e.get("project") or "").strip()
         status = e.get("status") or ""
+        url = (e.get("url") or "").strip()
         if not project or not status:
             continue
         norm_status = normalize_status(status)
@@ -381,6 +397,15 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
             for key in generate_aliases_from_landscape(project, {}):
                 if key and key not in name_to_status:
                     name_to_status[key] = norm_status
+            # GitHub URL aliases (org and org/repo)
+            gh = _extract_github_path(url)
+            if gh:
+                parts = gh.split("/")
+                org = parts[0]
+                if org and org not in name_to_status:
+                    name_to_status[org] = norm_status
+                if len(parts) >= 2 and gh not in name_to_status:
+                    name_to_status[gh] = norm_status
     return name_to_status
 
 
@@ -426,6 +451,38 @@ def build_devstats_status_map(html: str) -> Dict[str, str]:
         i += 1
 
     return name_to_status
+
+def _extract_github_path(url: str) -> str:
+    """
+    Return normalized GitHub path key:
+    - 'org/repo' if a repo URL
+    - 'org' if an org URL
+    Empty string if not a GitHub URL or cannot parse.
+    """
+    if not url:
+        return ""
+    u = url.strip().lower()
+    if not (u.startswith("http://") or u.startswith("https://")):
+        return ""
+    try:
+        from urllib.parse import urlparse
+        parsed = urlparse(u)
+        if parsed.netloc != "github.com":
+            return ""
+        path = parsed.path.strip("/")
+        if not path:
+            return ""
+        parts = [p for p in path.split("/") if p]
+        if not parts:
+            return ""
+        if len(parts) == 1:
+            return parts[0]
+        repo = parts[1]
+        if repo.endswith(".git"):
+            repo = repo[:-4]
+        return f"{parts[0]}/{repo}"
+    except Exception:
+        return ""
 
 
 def collect_pcc_expected_statuses(pcc_data: Dict[str, Any]) -> List[Tuple[str, str]]:
@@ -596,6 +653,14 @@ def main() -> None:
             for v in _hyphen_space_variants(candidate):
                 if v and v not in query_keys:
                     query_keys.append(v)
+        # Add compact and camel-case-separated variants
+        for candidate in list(query_keys):
+            comp = _compact_key(candidate)
+            if comp and comp not in query_keys:
+                query_keys.append(comp)
+            camel = normalize_key(_camel_to_words(candidate))
+            if camel and camel not in query_keys:
+                query_keys.append(camel)
         for tok in _extract_parenthetical_tokens(name):
             if tok and tok not in query_keys:
                 query_keys.append(tok)
