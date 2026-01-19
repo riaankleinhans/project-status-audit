@@ -25,7 +25,7 @@ FOUNDATION_MAINTAINERS_CSV_URL = "https://raw.githubusercontent.com/cncf/foundat
 DEVSTATS_URL = "https://devstats.cncf.io/"
 ARTWORK_README_URL = "https://raw.githubusercontent.com/cncf/artwork/main/README.md"
 REPO_ROOT = os.getcwd()
-PCC_YAML_PATH = os.path.join(REPO_ROOT, "pcc_projects.yaml")
+PCC_YAML_PATH = os.path.join(REPO_ROOT, "datasources", "pcc_projects.yaml")
 AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "status_audit.md")
 ALL_AUDIT_OUTPUT_PATH = os.path.join(REPO_ROOT, "audit", "all_statuses.md")
 DATASOURCES_DIR = os.path.join(REPO_ROOT, "datasources")
@@ -213,6 +213,7 @@ def generate_aliases_from_landscape(name: str, extra: Any) -> List[str]:
         if lfx_slug and lfx_slug not in aliases:
             aliases.append(lfx_slug)
     return aliases
+
 
 def normalize_status(value: str) -> str:
     if not value:
@@ -475,7 +476,7 @@ def write_full_status_markdown(
             out.append("_No entries._")
             out.append("")
             return out
-        out.append("| Project | PCC | Landscape | CLOMonitor | Maintainers | DevStats | Artwork |")
+        out.append("| Project | PCC | [Landscape](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats](https://devstats.cncf.io/) | [Artwork](https://github.com/cncf/artwork/blob/main/README.md) |")
         out.append("|---|---|---|---|---|---|---|")
         def fmt(v: str) -> str:
             return v if v else "-"
@@ -560,6 +561,8 @@ def main() -> None:
             for v in _hyphen_space_variants(candidate):
                 if v and v not in query_keys:
                     query_keys.append(v)
+        for tok in _extract_parentheticals(name):
+            pass
         for tok in _extract_parenthetical_tokens(name):
             if tok and tok not in query_keys:
                 query_keys.append(tok)

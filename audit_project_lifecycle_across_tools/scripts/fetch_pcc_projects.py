@@ -18,7 +18,8 @@ API_URL = "https://api-gw.platform.linuxfoundation.org/project-service/v1/projec
 FOUNDATION_ID_CNCF = "a0941000002wBz4AAE"
 PAGE_SIZE = 100
 SLEEP_BETWEEN_CALLS_SECONDS = 0.2
-OUTPUT_PATH = os.path.join(os.getcwd(), "pcc_projects.yaml")
+DATASOURCES_DIR = os.path.join(os.getcwd(), "datasources")
+OUTPUT_PATH = os.path.join(DATASOURCES_DIR, "pcc_projects.yaml")
 
 
 def get_lfx_token() -> str:
@@ -61,6 +62,8 @@ def category_rank(category: Any) -> int:
 
 
 def main() -> None:
+    # Ensure datasources directory exists
+    os.makedirs(DATASOURCES_DIR, exist_ok=True)
     token = get_lfx_token()
     session = requests.Session()
     session.headers.update(
