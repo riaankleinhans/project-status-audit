@@ -394,7 +394,22 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
         norm_status = normalize_status(status)
         # Filter to statuses we track; skip steering/maintainers pseudo-projects if not in PCC
         if norm_status in ("graduated", "incubating", "sandbox", "archived", "forming"):
-            for key in generate_aliases_from_landscape(project, {}):
+            # Base aliases
+            alias_candidates: List[str] = generate_aliases_from_landscape(project, {})
+            # Add colon-left alias (e.g., "Istio: Steering Committee" -> "Istio")
+            if ":" in project:
+                lhs = project.split(":", 1)[0].strip()
+                if lhs:
+                    alias_candidates.extend(generate_aliases_from_landscape(lhs, {}))
+            # Add first-word alias (e.g., "Kubernetes steering" -> "Kubernetes")
+            first_word = project.split()[0] if project.split() else ""
+            if first_word:
+                alias_candidates.extend(generate_aliases_from_landscape(first_word, {}))
+            # Add '-ai' stripped variant if present (e.g., 'k8sgpt-ai' -> 'k8sgpt')
+            for a in list(alias_candidates):
+                if a.endswith("-ai"):
+                    alias_candidates.append(a[:-3])
+            for key in alias_candidates:
                 if key and key not in name_to_status:
                     name_to_status[key] = norm_status
             # GitHub URL aliases (org and org/repo)
