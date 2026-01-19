@@ -561,8 +561,6 @@ def main() -> None:
             for v in _hyphen_space_variants(candidate):
                 if v and v not in query_keys:
                     query_keys.append(v)
-        for tok in _extract_parentheticals(name):
-            pass
         for tok in _extract_parenthetical_tokens(name):
             if tok and tok not in query_keys:
                 query_keys.append(tok)
