@@ -343,6 +343,7 @@ def build_artwork_status_map(readme_text: str) -> Dict[str, str]:
         if current_status and line.lstrip().startswith("* ") and not line.startswith("* "):
             name = parse_bullet_text(line)
             if name:
+                # Generate aliases for artwork project names
                 for key in generate_aliases_from_landscape(name, {}):
                     if key and key not in name_to_status:
                         name_to_status[key] = current_status
@@ -378,6 +379,16 @@ def build_clomonitor_status_map(clomonitor_data: Any) -> Dict[str, str]:
             for v in list(candidates):
                 candidates.add(_compact_key(v))
             for k in candidates:
+        # Aliases from display_name
+        for key in (generate_aliases_from_landscape(display_name, {}) if display_name else []):
+            if key and key not in name_to_status:
+                name_to_status[key] = maturity
+        # Aliases from slug
+        if slug:
+            # Slugs are already normalized-ish; still produce variants
+            slug_key = normalize_key(slug)
+            for v in _hyphen_space_variants(slug_key) + _remove_common_suffixes(slug_key):
+                k = v.strip()
                 if k and k not in name_to_status:
                     name_to_status[k] = maturity
     return name_to_status
@@ -421,6 +432,9 @@ def build_foundation_status_map(entries: List[Dict[str, str]]) -> Dict[str, str]
                     name_to_status[org] = norm_status
                 if len(parts) >= 2 and gh not in name_to_status:
                     name_to_status[gh] = norm_status
+            for key in generate_aliases_from_landscape(project, {}):
+                if key and key not in name_to_status:
+                    name_to_status[key] = norm_status
     return name_to_status
 
 
@@ -684,6 +698,7 @@ def main() -> None:
             if k in landscape_map:
                 l_status_raw = landscape_map[k]
                 break
+        # Use the same robust key set for other sources
         cm_status_raw = ""
         m_status_raw = ""
         d_status_raw = ""
