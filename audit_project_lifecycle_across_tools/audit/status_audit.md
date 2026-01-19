@@ -2,53 +2,32 @@
 
 | Project | [PCC status](./pcc_projects.yaml) | [Landscape status](https://github.com/cncf/landscape/blob/master/landscape.yml) | [CLOMonitor status](https://github.com/cncf/clomonitor/blob/main/data/cncf.yaml) | [Maintainers CSV status](https://github.com/cncf/foundation/blob/main/project-maintainers.csv) | [DevStats status](https://devstats.cncf.io/) | [Artwork status](https://github.com/cncf/artwork/blob/main/README.md) |
 |---|---|---|---|---|---|---|
-| cert-manager | graduated | graduated | - | graduated | graduated | graduated |
-| Dapr | graduated | graduated | - | graduated | graduated | graduated |
-| Istio | graduated | graduated | graduated | - | graduated | graduated |
 | Kubernetes | graduated | graduated | graduated | - | graduated | graduated |
 | Open Policy Agent | graduated | graduated | graduated | graduated | - | - |
-| The Update Framework (TUF) | graduated | graduated | - | - | - | - |
-| Chaos Mesh | incubating | incubating | incubating | - | incubating | incubating |
-| CNI | incubating | incubating | - | incubating | incubating | incubating |
-| Flatcar | incubating | incubating | incubating | - | incubating | incubating |
-| Fluid Project | incubating | incubating | - | - | - | - |
-| LitmusChaos | incubating | incubating | - | incubating | incubating | - |
-| metal3-io | incubating | - | - | incubating | - | - |
-| Notary | incubating | incubating | incubating | incubating | incubating | - |
-| OpenTelemetry | incubating | incubating | incubating | - | incubating | incubating |
-| Operator Framework | incubating | incubating | incubating | - | incubating | incubating |
-| BFE | sandbox | sandbox | - | sandbox | sandbox | sandbox |
+| LitmusChaos | incubating | incubating | incubating | incubating | incubating | - |
+| metal3-io | incubating | - | incubating | incubating | - | - |
 | Cadence | sandbox | sandbox | sandbox | - | sandbox | sandbox |
-| Capsule | sandbox | sandbox | - | sandbox | sandbox | sandbox |
-| cdk8s | sandbox | sandbox | sandbox | - | - | sandbox |
+| cdk8s | sandbox | sandbox | sandbox | sandbox | - | sandbox |
 | composefs | sandbox | sandbox | sandbox | sandbox | sandbox | - |
 | Connect RPC | sandbox | sandbox | sandbox | sandbox | - | sandbox |
 | container2wasm | sandbox | sandbox | sandbox | sandbox | sandbox | - |
 | Copa | sandbox | sandbox | sandbox | sandbox | - | - |
 | Distribution | sandbox | sandbox | sandbox | sandbox | sandbox | - |
-| External Secrets Operator | sandbox | sandbox | - | sandbox | sandbox | - |
 | Headlamp | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | Hexa | sandbox | sandbox | - | - | - | sandbox |
 | K8sGPT | sandbox | sandbox | sandbox | - | sandbox | sandbox |
 | krkn | sandbox | sandbox | sandbox | sandbox | - | sandbox |
 | kube-vip | sandbox | sandbox | sandbox | sandbox | sandbox | - |
-| Kubernetes AI Toolchain Operator (KAITO) | sandbox | sandbox | sandbox | - | - | - |
-| Logging Operator | sandbox | sandbox | - | sandbox | sandbox | - |
-| OAuth2 Proxy | sandbox | sandbox | sandbox | sandbox | - | - |
-| Open Policy Registry (OPCR) | sandbox | sandbox | - | - | - | - |
 | OpenChoreo | sandbox | - | - | - | - | - |
-| OpenFunction | sandbox | sandbox | - | sandbox | sandbox | sandbox |
-| ORAS (OCI Registry as Storage) | sandbox | sandbox | - | sandbox | - | - |
 | Oxia | sandbox | sandbox | sandbox | - | sandbox | - |
 | Piraeus-Datastore | sandbox | sandbox | - | sandbox | sandbox | - |
 | Podman Container Tools | sandbox | sandbox | sandbox | sandbox | sandbox | - |
 | Runme Notebooks | sandbox | sandbox | sandbox | sandbox | sandbox | - |
-| Serverless Workflow Specification | sandbox | sandbox | - | sandbox | - | sandbox |
-| Service Mesh Performance | sandbox | archived | - | - | - | - |
+| Service Mesh Performance | sandbox | archived | - | - | - | archived |
 | Spin | sandbox | - | sandbox | sandbox | sandbox | sandbox |
 | TrestleGRC | sandbox | sandbox | - | - | sandbox | - |
-| VS Code Kubernetes Tools | sandbox | - | - | - | sandbox | - |
-| WasmEdge Runtime | sandbox | sandbox | - | sandbox | sandbox | - |
+| VS Code Kubernetes Tools | sandbox | sandbox | sandbox | - | sandbox | - |
+| WasmEdge Runtime | sandbox | sandbox | - | sandbox | sandbox | sandbox |
 | Agones | forming | - | - | - | - | - |
 | AIBrix | forming | - | - | - | - | - |
 | BLAFS | forming | - | - | - | - | - |
